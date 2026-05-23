@@ -4,6 +4,8 @@ Supabase Postgres is the initial database foundation.
 
 Implemented migration: `supabase/migrations/202605230001_initial_product_foundation.sql`.
 
+Applied to the configured Supabase project and verified with `npm run db:verify`.
+
 ## Goals
 
 - Store masters, assistant profiles, AI numbers, calls, call events, leads, Telegram messages, subscriptions, value reports, and audit logs.
@@ -39,6 +41,19 @@ Implemented migration: `supabase/migrations/202605230001_initial_product_foundat
 - `call_events` and `lead_events` provide append-only lifecycle history.
 - `updated_at` triggers are installed for mutable tables.
 - Useful indexes exist on master, call, lead, status, and created-at fields.
+- Demo data was seeded and verified through repository reads with `npm run smoke:admin-data`.
+
+## Rerun Commands
+
+```bash
+npm run env:check
+npm run db:migrate
+npm run db:verify
+npm run seed
+npm run smoke:admin-data
+```
+
+`db:migrate` skips execution when all required tables already exist. The migration contains no `DROP TABLE`, `DELETE`, or `TRUNCATE`.
 
 ## Rules
 

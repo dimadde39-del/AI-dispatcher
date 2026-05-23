@@ -14,7 +14,10 @@ export const publicEnvSchema = z.object({
 
 export const serverEnvSchema = publicEnvSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: requiredEnvValue,
-  SUPABASE_DB_URL: optionalSecretSchema,
+  SUPABASE_DB_URL: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().url().optional(),
+  ),
   SUPABASE_PROJECT_REF: optionalSecretSchema,
   SUPABASE_ACCESS_TOKEN: optionalSecretSchema,
   TELEGRAM_BOT_TOKEN: optionalSecretSchema,

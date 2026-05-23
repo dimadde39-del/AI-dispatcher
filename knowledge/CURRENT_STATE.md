@@ -47,10 +47,22 @@ The product sells saved orders, not an "AI bot".
 - Next.js 15 App Router project config and internal `/admin` surface.
 - Zod env validation in `src/lib/env.ts`.
 - Supabase migration for masters, assistant profiles, AI numbers, calls, call events, leads, lead events, Telegram messages, subscriptions, value reports, and audit logs.
+- Supabase foundation migration applied successfully to the configured project.
+- Demo seed applied successfully and verified idempotent.
 - Domain enums, entity schemas, lead transitions, and value report calculation.
 - Repository interfaces plus Supabase repository implementations.
 - Application use cases for master creation, AI number assignment, forwarding instructions, trial activation, lead creation, lead acceptance, spam marking, and value report creation.
 - Seed script and lightweight tests.
+
+## Verified Live Data
+
+- Required Supabase tables exist.
+- Demo master exists.
+- Two demo AI numbers exist.
+- Demo call exists.
+- Demo lead exists.
+- Demo subscription exists.
+- Admin data smoke verification reads through Supabase repositories, not mock data.
 
 ## Source Notes
 

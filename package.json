@@ -10,13 +10,18 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "env:check": "tsx scripts/env-check.ts",
+    "db:migrate": "tsx scripts/db-migrate.ts",
+    "db:verify": "tsx scripts/db-verify.ts",
+    "smoke:admin-data": "tsx scripts/smoke-admin-data.ts",
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
     "next": "^15.0.0",
+    "postgres": "^3.4.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "postgres": "^3.4.7",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -17,11 +17,14 @@ Build the initial product foundation.
 
 - Product code skeleton.
 - Supabase database migration.
+- Supabase database migration applied to the configured project.
 - Domain types and status enums.
 - Repository interfaces and Supabase implementations.
 - Application use cases for foundation workflows.
 - Internal admin UI skeleton.
 - Seed script.
+- Demo seed applied and verified idempotent.
+- Live Supabase admin-data smoke check.
 - Lightweight domain/use-case tests.
 
 ## Not Started Yet

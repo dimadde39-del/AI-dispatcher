@@ -44,12 +44,31 @@ Security notes:
 - `npm run typecheck`
 - `npm run test`
 - `npm run env:check`
+- `npm run db:migrate`
+- `npm run db:verify`
 - `npm run build`
 - `npm run seed`
+- `npm run smoke:admin-data`
 
 ## Database
 
-Apply the migration in `supabase/migrations/202605230001_initial_product_foundation.sql` to the Supabase project before running the seed script or admin UI against live data.
+Apply the migration in `supabase/migrations/202605230001_initial_product_foundation.sql` to the Supabase project before running the seed script or admin UI against live data:
+
+```bash
+npm run db:migrate
+npm run db:verify
+```
+
+Seed demo data:
+
+```bash
+npm run seed
+npm run smoke:admin-data
+```
+
+The seed script is designed to be safe to run multiple times. It should keep one demo master, two demo AI numbers, one demo call, one demo lead, and one demo subscription.
+
+The current local machine uses `SUPABASE_DB_URL` with Supabase's pooler connection string. The migration runner disables prepared statements for pooler compatibility.
 
 ## Expected Workflow
 
@@ -65,5 +84,8 @@ Run:
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
+- `npm run env:check`
+- `npm run db:verify`
+- `npm run smoke:admin-data`
 - `npm run build`
 - Relevant tests when business logic changes

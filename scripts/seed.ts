@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getServerEnv } from "../src/lib/env";
+import { loadEnvFiles } from "./load-env";
 
 interface IdRow {
   id: string;
@@ -13,6 +14,7 @@ function requireId(row: IdRow | null, label: string): string {
 }
 
 async function main() {
+  loadEnvFiles();
   const env = getServerEnv();
   const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: {
@@ -23,55 +25,97 @@ async function main() {
 
   const { data: numberOne, error: numberOneError } = await supabase
     .from("ai_numbers")
-    .upsert(
-      {
-        phone_number: "+77273330001",
-        provider: "zadarma_kz",
-        provider_number_id: "demo-number-1",
-        status: "AVAILABLE",
-      },
-      { onConflict: "phone_number" },
-    )
-    .select("id")
-    .single();
+    .select("id, master_id")
+    .eq("phone_number", "+77273330001")
+    .maybeSingle();
   if (numberOneError) {
     throw numberOneError;
   }
 
-  const { error: numberTwoError } = await supabase
+  const { data: createdNumberOne, error: createNumberOneError } = numberOne
+    ? { data: numberOne, error: null }
+    : await supabase
+        .from("ai_numbers")
+        .insert({
+          phone_number: "+77273330001",
+          provider: "zadarma_kz",
+          provider_number_id: "demo-number-1",
+          status: "AVAILABLE",
+        })
+        .select("id, master_id")
+        .single();
+  if (createNumberOneError) {
+    throw createNumberOneError;
+  }
+
+  const { data: numberTwo, error: numberTwoError } = await supabase
     .from("ai_numbers")
-    .upsert(
-      {
-        phone_number: "+77273330002",
-        provider: "zadarma_kz",
-        provider_number_id: "demo-number-2",
-        status: "AVAILABLE",
-      },
-      { onConflict: "phone_number" },
-    );
+    .select("id")
+    .eq("phone_number", "+77273330002")
+    .maybeSingle();
   if (numberTwoError) {
     throw numberTwoError;
   }
 
-  const { data: masterRow, error: masterError } = await supabase
+  if (!numberTwo) {
+    const { error: createNumberTwoError } = await supabase
+      .from("ai_numbers")
+      .insert({
+        phone_number: "+77273330002",
+        provider: "zadarma_kz",
+        provider_number_id: "demo-number-2",
+        status: "AVAILABLE",
+      });
+    if (createNumberTwoError) {
+      throw createNumberTwoError;
+    }
+  }
+
+  const { data: existingMasterRow, error: existingMasterError } = await supabase
     .from("masters")
-    .upsert(
-      {
-        name: "Demo Azamat",
-        phone: "+77001234567",
-        city: "Almaty",
-        trade_type: "PLUMBING",
-        telegram_chat_id: "demo-chat",
-        status: "TRIAL",
-      },
-      { onConflict: "phone" },
-    )
     .select("id")
-    .single();
+    .eq("phone", "+77001234567")
+    .maybeSingle();
+  if (existingMasterError) {
+    throw existingMasterError;
+  }
+
+  const { data: masterRow, error: masterError } = existingMasterRow
+    ? { data: existingMasterRow, error: null }
+    : await supabase
+        .from("masters")
+        .insert({
+          name: "Demo Azamat",
+          phone: "+77001234567",
+          city: "Almaty",
+          trade_type: "PLUMBING",
+          telegram_chat_id: "demo-chat",
+          status: "TRIAL",
+        })
+        .select("id")
+        .single();
   if (masterError) {
     throw masterError;
   }
   const masterId = requireId(masterRow as IdRow | null, "Demo master");
+
+  const aiNumberId = requireId(createdNumberOne as IdRow | null, "Demo AI number");
+  const numberOneMasterId =
+    createdNumberOne && "master_id" in createdNumberOne
+      ? (createdNumberOne.master_id as string | null)
+      : null;
+  if (!numberOneMasterId || numberOneMasterId === masterId) {
+    const { error: assignNumberError } = await supabase
+      .from("ai_numbers")
+      .update({
+        master_id: masterId,
+        status: "ASSIGNED",
+      })
+      .eq("id", aiNumberId);
+    if (assignNumberError) {
+      throw assignNumberError;
+    }
+  }
 
   const { data: profileRow, error: profileFindError } = await supabase
     .from("assistant_profiles")
@@ -94,18 +138,6 @@ async function main() {
     if (profileCreateError) {
       throw profileCreateError;
     }
-  }
-
-  const aiNumberId = requireId(numberOne as IdRow | null, "Demo AI number");
-  const { error: assignNumberError } = await supabase
-    .from("ai_numbers")
-    .update({
-      master_id: masterId,
-      status: "ASSIGNED",
-    })
-    .eq("id", aiNumberId);
-  if (assignNumberError) {
-    throw assignNumberError;
   }
 
   const { data: callRow, error: callError } = await supabase
@@ -191,6 +223,7 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-  console.error(error);
+  const message = error instanceof Error ? error.message : "Unknown seed error";
+  console.error(`Seed failed: ${message}`);
   process.exitCode = 1;
 });
