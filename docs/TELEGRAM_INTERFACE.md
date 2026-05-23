@@ -40,7 +40,7 @@ Client WhatsApp/SMS notifications are deferred. Telegram is for the master inter
 🛠 Проблема: {problem}
 📍 Адрес: {address or "Не указан"}
 ⏱ Срочность: {urgency label}
-⏰ Время: {createdAt formatted}
+⏰ Время звонка: {call started time or lead created time}
 🔥 AI-Оценка: {aiScore label}
 
 💬 Кратко:
@@ -53,7 +53,9 @@ If `safetyFlag` is not `NONE`, the card includes:
 ⚠️ ВАЖНО: возможная опасная ситуация. Клиенту нужно обращаться в аварийную службу / 112.
 ```
 
-Telegram card time is formatted as `dd.MM.yyyy, HH:mm` in `Asia/Almaty`.
+Telegram card time is the call time, not the Telegram message send time. The presenter uses
+`call.startedAt` when available and falls back to `lead.createdAt` only when the call timestamp is
+missing. It is formatted as `dd.MM.yyyy, HH:mm` in `Asia/Almaty`.
 
 ## Inline Buttons
 
@@ -175,6 +177,10 @@ Terminal test:
 ```bash
 npm run telegram:test-card
 ```
+
+`telegram:test-card` refreshes the existing demo call and lead timestamps before sending, so the
+live smoke-test card does not look like an old missed call. It updates the existing demo rows rather
+than creating unlimited duplicate leads.
 
 If needed, `telegram:test-card` can use `TELEGRAM_TEST_CHAT_ID` to update the demo master before
 sending:

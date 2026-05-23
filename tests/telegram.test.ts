@@ -24,6 +24,7 @@ import { sanitizeTelegramChatId } from "../src/infrastructure/telegram/telegram-
 import { formatTelegramDate } from "../src/infrastructure/telegram/telegram-date";
 import { buildTelegramLeadCardMessage } from "../src/infrastructure/telegram/telegram-message-builder";
 import { normalizeKazakhstanPhoneForDisplay } from "../src/infrastructure/telegram/telegram-phone";
+import { buildDemoTimestampRefresh, findDemoLead } from "../scripts/telegram-demo-data";
 
 const timestamp = "2026-05-23T00:00:00.000Z";
 const russianDemoSummary = "Клиент сообщил о протечке трубы возле Абая 150. Мастеру нужно перезвонить.";
@@ -59,6 +60,27 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     status: "NEW",
     acceptedAt: null,
     completedAt: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...overrides,
+  };
+}
+
+function makeCall(overrides: Partial<Call> = {}): Call {
+  return {
+    id: "33333333-3333-4333-8333-333333333333",
+    masterId: "22222222-2222-4222-8222-222222222222",
+    provider: "demo",
+    providerCallId: "demo-call-1",
+    customerPhone: "+77007654321",
+    aiNumber: "+77273330001",
+    status: "PROCESSED",
+    startedAt: "2026-05-23T01:00:00.000Z",
+    endedAt: null,
+    durationSeconds: 60,
+    transcript: null,
+    recordingUrl: null,
+    rawPayload: {},
     createdAt: timestamp,
     updatedAt: timestamp,
     ...overrides,
@@ -223,7 +245,8 @@ test("buildTelegramLeadCardMessage formats a Russian lead card with buttons", ()
   assert.match(message.text, /👤 Клиент: Demo Client/);
   assert.match(message.text, /📞 Телефон: \+7 700 765 43 21/);
   assert.match(message.text, /🛠 Проблема: Течет труба под ванной/);
-  assert.match(message.text, /⏰ Время: 23\.05\.2026, 05:00/);
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/);
+  assert.doesNotMatch(message.text, /⏰ Время:/);
   assert.match(message.text, /🔥 AI-Оценка: Горячий/);
   assert.match(message.text, new RegExp(russianDemoSummary));
   assert.doesNotMatch(message.text, /Client reports/);
@@ -250,6 +273,34 @@ test("buildTelegramLeadCardMessage uses fallbacks and safety warning", () => {
   assert.match(message.text, /📍 Адрес: Не указан/);
   assert.match(message.text, /⚠️ ВАЖНО: возможная опасная ситуация/);
   assert.equal(message.replyMarkup?.inline_keyboard.length, 1);
+});
+
+test("buildTelegramLeadCardMessage prefers call started time over lead created time", () => {
+  const message = buildTelegramLeadCardMessage({
+    lead: makeLead({
+      createdAt: "2026-05-23T00:00:00.000Z",
+    }),
+    master: makeMaster(),
+    call: makeCall({
+      startedAt: "2026-05-23T01:00:00.000Z",
+    }),
+  });
+
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 06:00/);
+});
+
+test("buildTelegramLeadCardMessage falls back to lead created time when call time is missing", () => {
+  const message = buildTelegramLeadCardMessage({
+    lead: makeLead({
+      createdAt: "2026-05-23T00:00:00.000Z",
+    }),
+    master: makeMaster(),
+    call: makeCall({
+      startedAt: null,
+    }),
+  });
+
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/);
 });
 
 test("parseTelegramLeadCallbackData handles compact lead callback data", () => {
@@ -343,4 +394,18 @@ test("normalizeKazakhstanPhoneForDisplay formats simple Kazakhstan numbers", () 
 
 test("formatTelegramDate uses Asia/Almaty deterministically", () => {
   assert.equal(formatTelegramDate("2026-05-23T00:00:00.000Z"), "23.05.2026, 05:00");
+});
+
+test("telegram test-card helpers refresh demo timestamps without creating a new lead", () => {
+  const now = new Date("2026-05-23T17:21:00.000Z");
+  const timestamps = buildDemoTimestampRefresh(now);
+  const demoLead = makeLead({ customerPhone: "+77007654321" });
+
+  assert.equal(findDemoLead([makeLead({ customerPhone: "+77000000000" }), demoLead])?.id, demoLead.id);
+  assert.deepEqual(timestamps, {
+    callStartedAt: "2026-05-23T17:21:00.000Z",
+    callCreatedAt: "2026-05-23T17:21:00.000Z",
+    leadCreatedAt: "2026-05-23T17:21:00.000Z",
+    leadUpdatedAt: "2026-05-23T17:21:00.000Z",
+  });
 });

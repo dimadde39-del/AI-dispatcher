@@ -6,6 +6,7 @@ import type {
   MasterInterfacePort,
 } from "../src/application/ports";
 import { createSupabaseRepositoryContext } from "../src/infrastructure/db";
+import { findDemoLead } from "./telegram-demo-data";
 import { loadEnvFiles } from "./load-env";
 
 const CallbackActionSchema = z.enum(["accept", "spam"]);
@@ -20,7 +21,7 @@ async function main() {
   const action = parseAction(process.argv.slice(2));
   const repositories = createSupabaseRepositoryContext();
   const leads = await repositories.leads.list();
-  const demoLead = leads.find((lead) => lead.customerPhone === "+77007654321") ?? leads[0] ?? null;
+  const demoLead = findDemoLead(leads);
 
   if (!demoLead) {
     throw new Error("No demo lead found. Run npm run seed first.");

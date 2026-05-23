@@ -132,6 +132,10 @@ npm run seed
 npm run telegram:test-card
 ```
 
+`telegram:test-card` refreshes the existing demo call and lead timestamps to the current time before
+sending. The card displays `Время звонка` from `call.started_at` when available, falling back to
+`lead.created_at` only when needed.
+
 You can also call the local-only route while the dev server is running:
 
 ```bash

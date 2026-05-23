@@ -71,6 +71,9 @@ The product sells saved orders, not an "AI bot".
 - Telegram lead cards no longer include a `tel:` URL button because Telegram rejected it during live
   testing. Phone numbers remain visible once in the card text.
 - Telegram card time is formatted as `dd.MM.yyyy, HH:mm` in `Asia/Almaty`.
+- Telegram card time is labeled `Время звонка` and uses `call.startedAt` first, then `lead.createdAt`.
+- `npm run telegram:test-card` refreshes the existing demo call and lead timestamps before sending to
+  avoid stale "new missed call" cards.
 - Demo lead problem and summary are Russian for live Telegram smoke tests.
 - Admin leads page can send/resend cards, shows Telegram send state, and disables sending when token/chat id is missing.
 - Admin master detail page shows `telegram_chat_id` and Telegram readiness.
@@ -81,6 +84,7 @@ The product sells saved orders, not an "AI bot".
 - Telegram-specific readiness sees `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as present without printing values.
 - `telegram:get-updates` returned the pilot chat id, and the demo master was updated with the sanitized numeric chat id.
 - Latest live `npm run telegram:test-card` sent a polished Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
+- Latest live card used `call.startedAt` for the displayed call time, aligned with the current Almaty minute.
 - Local accept callback simulation is idempotent against the already accepted demo lead.
 
 ## Verified Live Data

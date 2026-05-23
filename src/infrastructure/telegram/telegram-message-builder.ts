@@ -41,6 +41,10 @@ function phoneForLead(lead: Lead, call: Call | null | undefined): string | null 
   return lead.customerPhone ?? call?.customerPhone ?? null;
 }
 
+function callTimeForLead(lead: Lead, call: Call | null | undefined): string {
+  return call?.startedAt ?? lead.createdAt;
+}
+
 function statusLine(status: TelegramLeadCardStatus | undefined): string | null {
   if (status === "ACCEPTED") {
     return "✅ Статус: заказ взят мастером.";
@@ -88,7 +92,7 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
     `🛠 Проблема: ${lead.problem}`,
     `📍 Адрес: ${fallback(lead.address, "Не указан")}`,
     `⏱ Срочность: ${urgencyLabels[lead.urgency]}`,
-    `⏰ Время: ${formatTelegramDate(lead.createdAt)}`,
+    `⏰ Время звонка: ${formatTelegramDate(callTimeForLead(lead, call))}`,
     `🔥 AI-Оценка: ${aiScoreLabels[lead.aiScore]}`,
   ];
 
