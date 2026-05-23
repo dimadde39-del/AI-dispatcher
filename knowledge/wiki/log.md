@@ -2,6 +2,10 @@
 
 ## 2026-05-23
 
+- Built the Vapi webhook foundation: Vapi parser/verifier/provider adapter, normalized voice events,
+  thin `/api/webhooks/vapi` route, call upsert/event persistence, AI-number master resolution,
+  deterministic end-of-call lead extraction, Telegram lead-card reuse, local fixtures/simulation, admin
+  visibility, and tests.
 - Verified the real Telegram callback webhook on the deployed Vercel URL: setWebhook succeeded,
   webhook info showed zero pending updates and no last error, a live test card was accepted in
   Telegram, Supabase status changed to `ACCEPTED`, and the callback-handled event was recorded.

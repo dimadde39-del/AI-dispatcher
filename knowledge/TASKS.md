@@ -4,10 +4,11 @@
 
 1. Product foundation: DB schema, domain types, repositories, admin skeleton. Done.
 2. Telegram interface: lead card, callbacks, status updates. Done.
-3. Vapi webhook: call started/ended, transcript, recording. Next.
-4. Lead extraction: strict JSON, Zod validation, fallback.
-5. Reports: weekly value reminders.
-6. Pilot operations tooling.
+3. Vapi webhook: call started/ended, transcript, recording. Done.
+4. Configure Vapi assistant/phone number and run a real end-of-call report test. Next.
+5. Lead extraction: strict JSON, Zod validation, fallback.
+6. Reports: weekly value reminders.
+7. Pilot operations tooling.
 
 ## Current Task
 
@@ -43,11 +44,14 @@ Build the Vapi webhook foundation.
   route secret/unsupported-update tests, and public callback checklist docs.
 - Real public Telegram inline callback verified through the deployed webhook; the accept button
   changed the demo lead to `ACCEPTED` and wrote the callback-handled event.
+- Vapi webhook foundation: parser/verifier/provider abstraction, thin webhook route, call lifecycle
+  use cases, master resolution by AI number, deterministic end-of-call lead extraction, Telegram
+  lead-card integration, fixtures, simulation script, admin visibility, and tests.
 
 ## Not Started Yet
 
 - Authentication.
 - Billing.
-- Vapi webhook integration.
-- Lead extraction from transcripts.
+- Live Vapi assistant/phone number configuration.
+- Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.

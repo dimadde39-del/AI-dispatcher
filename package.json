@@ -22,6 +22,8 @@
     "telegram:test-card": "tsx scripts/telegram-test-card.ts",
     "telegram:simulate-accept": "tsx scripts/telegram-simulate-callback.ts --action=accept",
     "telegram:simulate-spam": "tsx scripts/telegram-simulate-callback.ts --action=spam",
+    "vapi:ready": "tsx scripts/vapi-readiness.ts",
+    "vapi:simulate": "tsx scripts/vapi-simulate-event.ts",
     "lead:status": "tsx scripts/lead-status.ts"
   },
   "dependencies": {

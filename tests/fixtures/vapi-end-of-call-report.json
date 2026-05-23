@@ -1,0 +1,23 @@
+{
+  "message": {
+    "type": "end-of-call-report",
+    "timestamp": "2026-05-23T10:03:00.000Z",
+    "call": {
+      "id": "vapi-call-fixture-1",
+      "startedAt": "2026-05-23T10:00:00.000Z",
+      "endedAt": "2026-05-23T10:03:00.000Z"
+    },
+    "customer": {
+      "number": "+77007654321"
+    },
+    "phoneNumber": {
+      "number": "+77273330001"
+    },
+    "durationSeconds": 180,
+    "summary": "Клиент говорит, что срочно течет труба под ванной. Адрес: улица Абая 150.",
+    "artifact": {
+      "transcript": "Клиент: Срочно течет труба под ванной, уже вода на полу. Адрес улица Абая 150.",
+      "recordingUrl": "https://example.com/recordings/vapi-call-fixture-1.mp3"
+    }
+  }
+}

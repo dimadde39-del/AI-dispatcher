@@ -18,6 +18,62 @@ Pipecat/self-host later means future margin optimization and deeper voice contro
 - Capture transcript and recording references when available.
 - Surface errors as retry, failed, or manual-review states.
 
+## Current Vapi Webhook Foundation
+
+Vapi Server URL should point to:
+
+```text
+https://YOUR_APP_URL/api/webhooks/vapi
+```
+
+The webhook route is intentionally thin: it reads JSON, verifies the configured secret, asks the Vapi
+provider adapter to parse the payload, and hands a normalized `VoiceEvent` to the application use
+case.
+
+Normalized events currently supported:
+
+- `CALL_STARTED`
+- `CALL_ENDED`
+- `TRANSCRIPT_UPDATED`
+- `UNKNOWN`
+
+Vapi payloads are parsed defensively from `payload.message` when present, and from the payload root
+when Vapi sends the message directly. Unknown event types are preserved and should not crash the
+webhook.
+
+## Webhook Secret
+
+Current implementation uses one canonical secret header:
+
+```text
+x-vapi-webhook-secret: <VAPI_WEBHOOK_SECRET>
+```
+
+If `VAPI_WEBHOOK_SECRET` is configured, the route rejects missing or mismatched headers with `401`.
+If no secret is configured outside production, local development is allowed. In production, missing
+`VAPI_WEBHOOK_SECRET` means webhook verification fails closed.
+
+If the Vapi dashboard cannot send a custom secret header for a given setup, use one of these
+fallbacks before a live pilot:
+
+- A unique unguessable webhook URL/path or query-secret wrapper in front of the app.
+- Disable Vercel protection only for the webhook route while keeping the route secret protected.
+- Replace the simple shared-secret header with Vapi signature verification if Vapi exposes one for
+  the account/event type.
+
+## Lead Extraction
+
+The first foundation uses deterministic extraction from the end-of-call report:
+
+- Summary first, then transcript fallback.
+- Simple address heuristics.
+- Emergency flags for gas, fire, or dangerous electric situations.
+- High urgency for urgent leak/burst/fridge/lockout patterns.
+- No LLM extraction yet.
+
+Future work should replace this with a strict JSON LLM extractor validated by Zod, while preserving
+the deterministic fallback.
+
 ## Application Responsibilities
 
 - Create or update calls.

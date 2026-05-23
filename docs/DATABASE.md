@@ -39,6 +39,12 @@ Applied to the configured Supabase project and verified with `npm run db:verify`
 
 - `calls.raw_payload` and event payloads are `jsonb` so future provider webhooks can store raw payloads before normalization.
 - `call_events` and `lead_events` provide append-only lifecycle history.
+- Vapi webhook handling writes raw payloads to `calls.raw_payload` and each provider lifecycle payload
+  to `call_events.payload`.
+- End-of-call reports create or update a provider-neutral `calls` row keyed by `(provider,
+  provider_call_id)`, then create one linked `leads` row per call.
+- Lead cards sent from Vapi-created leads are persisted in `telegram_messages` through the existing
+  Telegram lead-card use case.
 - `updated_at` triggers are installed for mutable tables.
 - Useful indexes exist on master, call, lead, status, and created-at fields.
 - Demo data was seeded and verified through repository reads with `npm run smoke:admin-data`.

@@ -9,9 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function LeadsPage() {
   const repositories = getAdminRepositories();
-  const [leads, masters] = await Promise.all([
+  const [leads, masters, calls] = await Promise.all([
     repositories.leads.list(),
     repositories.masters.list(),
+    repositories.calls.list(),
   ]);
   const telegramMessagesByLead = new Map(
     await Promise.all(
@@ -19,6 +20,7 @@ export default async function LeadsPage() {
     ),
   );
   const mastersById = new Map(masters.map((master) => [master.id, master]));
+  const callsById = new Map(calls.map((call) => [call.id, call]));
   const telegramTokenConfigured = hasTelegramBotToken();
 
   return (
@@ -35,6 +37,7 @@ export default async function LeadsPage() {
               <th>Customer</th>
               <th>Urgency</th>
               <th>Score</th>
+              <th>Call</th>
               <th>Status</th>
               <th>Telegram</th>
               <th>Created</th>
@@ -44,6 +47,7 @@ export default async function LeadsPage() {
           <tbody>
             {leads.map((lead) => {
               const master = mastersById.get(lead.masterId);
+              const call = lead.callId ? callsById.get(lead.callId) : null;
               const telegramMessages = telegramMessagesByLead.get(lead.id) ?? [];
               const telegramDisabledReason = !telegramTokenConfigured
                 ? "Bot token missing"
@@ -65,6 +69,17 @@ export default async function LeadsPage() {
                   </td>
                   <td>{lead.urgency}</td>
                   <td>{lead.aiScore}</td>
+                  <td>
+                    {call ? (
+                      <>
+                        {call.provider}
+                        <br />
+                        <span className="muted">{call.providerCallId}</span>
+                      </>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td>
                     <StatusBadge status={lead.status} />
                   </td>

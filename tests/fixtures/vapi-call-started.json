@@ -1,0 +1,16 @@
+{
+  "message": {
+    "type": "call-started",
+    "timestamp": "2026-05-23T10:00:00.000Z",
+    "call": {
+      "id": "vapi-call-fixture-1",
+      "startedAt": "2026-05-23T10:00:00.000Z"
+    },
+    "customer": {
+      "number": "+77007654321"
+    },
+    "phoneNumber": {
+      "number": "+77273330001"
+    }
+  }
+}

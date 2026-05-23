@@ -13,7 +13,7 @@ export default async function CallsPage() {
     <>
       <PageHeader
         title="Calls"
-        description="Provider-neutral call records. Provider webhooks are not implemented yet."
+        description="Provider-neutral call records from voice webhooks."
       />
       <div className="table-wrap">
         <table>
@@ -24,6 +24,8 @@ export default async function CallsPage() {
               <th>AI number</th>
               <th>Status</th>
               <th>Duration</th>
+              <th>Transcript</th>
+              <th>Recording</th>
               <th>Started</th>
               <th>Created</th>
             </tr>
@@ -42,6 +44,16 @@ export default async function CallsPage() {
                   <StatusBadge status={call.status} />
                 </td>
                 <td>{call.durationSeconds ?? "-"} sec</td>
+                <td>{call.transcript ? <span className="badge badge-success">Present</span> : "-"}</td>
+                <td>
+                  {call.recordingUrl ? (
+                    <a href={call.recordingUrl} target="_blank" rel="noreferrer">
+                      Open
+                    </a>
+                  ) : (
+                    "-"
+                  )}
+                </td>
                 <td>{formatDateTime(call.startedAt)}</td>
                 <td>{formatDateTime(call.createdAt)}</td>
               </tr>

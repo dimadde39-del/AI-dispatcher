@@ -2,7 +2,7 @@
 
 ## Phase
 
-Current phase: Telegram interface foundation built.
+Current phase: Vapi webhook foundation built.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -20,7 +20,7 @@ The product sells saved orders, not an "AI bot".
 - Internal admin UI.
 - Supabase database.
 - Telegram master interface.
-- Vapi webhook integration later.
+- Vapi webhook integration foundation.
 
 ## Deferred Surfaces
 
@@ -96,6 +96,26 @@ The product sells saved orders, not an "AI bot".
   sent, the Telegram accept button changed Supabase status to `ACCEPTED`, and a
   `TELEGRAM_LEAD_CALLBACK_HANDLED` event was written after the Telegram card edit/answer path.
 
+## Implemented Vapi Webhook Foundation
+
+- Provider-neutral `VoiceEvent` types for `CALL_STARTED`, `CALL_ENDED`, `TRANSCRIPT_UPDATED`, and
+  `UNKNOWN`.
+- Vapi adapter parses payloads from `payload.message` or the root payload, preserves raw payloads,
+  and tolerates unknown event types.
+- Vapi webhook verification uses the `x-vapi-webhook-secret` header when `VAPI_WEBHOOK_SECRET` is
+  configured. Missing secret is allowed only outside production.
+- Thin `POST /api/webhooks/vapi` route verifies, parses, calls the application use case, and returns
+  safe JSON.
+- Application handlers upsert calls by provider and provider call id, write call events and audit
+  logs, resolve masters by assigned AI number, and avoid duplicate leads on repeated end reports.
+- End-of-call reports deterministically extract lead fields from summary/transcript, create a linked
+  lead, mark the call `PROCESSED`, and send the existing Telegram lead card when Telegram is
+  configured.
+- Transcript updates write call events and can append/update call transcript without creating a lead.
+- Unknown Vapi events are recorded when possible and do not crash the webhook.
+- Local fixture simulation is available through `npm run vapi:simulate`; readiness checks are
+  available through `npm run vapi:ready`.
+
 ## Verified Live Data
 
 - Required Supabase tables exist.
@@ -116,4 +136,5 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Start the Vapi webhook foundation when ready.
+Configure the Vapi assistant and phone number, set the deployed Server URL to
+`https://YOUR_APP_URL/api/webhooks/vapi`, and run a real end-of-call report test.

@@ -1,0 +1,12 @@
+{
+  "message": {
+    "type": "assistant-request",
+    "timestamp": "2026-05-23T10:01:30.000Z",
+    "call": {
+      "id": "vapi-call-fixture-1"
+    },
+    "payload": {
+      "note": "Unknown provider event shape should not crash parsing."
+    }
+  }
+}

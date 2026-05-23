@@ -44,6 +44,7 @@ export interface AssistantProfileRepository {
 export interface AiNumberRepository {
   create(input: CreateAiNumberInput): Promise<AiNumber>;
   getById(id: string): Promise<AiNumber | null>;
+  findByPhoneNumber(phoneNumber: string): Promise<AiNumber | null>;
   list(): Promise<AiNumber[]>;
   listAvailable(): Promise<AiNumber[]>;
   update(id: string, input: UpdateAiNumberInput): Promise<AiNumber>;
@@ -52,6 +53,7 @@ export interface AiNumberRepository {
 export interface CallRepository {
   create(input: CreateCallInput): Promise<Call>;
   getById(id: string): Promise<Call | null>;
+  findByProviderCallId(provider: string, providerCallId: string): Promise<Call | null>;
   list(): Promise<Call[]>;
   listByMasterAndPeriod(masterId: string, periodStart: string, periodEnd: string): Promise<Call[]>;
   update(id: string, input: UpdateCallInput): Promise<Call>;
@@ -65,6 +67,7 @@ export interface CallEventRepository {
 export interface LeadRepository {
   create(input: CreateLeadInput): Promise<Lead>;
   getById(id: string): Promise<Lead | null>;
+  findByCallId(callId: string): Promise<Lead | null>;
   list(): Promise<Lead[]>;
   listByMasterAndPeriod(masterId: string, periodStart: string, periodEnd: string): Promise<Lead[]>;
   update(id: string, input: UpdateLeadInput): Promise<Lead>;

@@ -128,6 +128,7 @@ function createRepositoryContext(lead: Lead, master: Master = makeMaster()): {
     aiNumbers: {
       create: async () => unsupported("aiNumbers.create"),
       getById: async () => unsupported("aiNumbers.getById"),
+      findByPhoneNumber: async () => unsupported("aiNumbers.findByPhoneNumber"),
       list: async () => unsupported("aiNumbers.list"),
       listAvailable: async () => unsupported("aiNumbers.listAvailable"),
       update: async () => unsupported("aiNumbers.update"),
@@ -135,6 +136,7 @@ function createRepositoryContext(lead: Lead, master: Master = makeMaster()): {
     calls: {
       create: async () => unsupported("calls.create"),
       getById: async (): Promise<Call | null> => null,
+      findByProviderCallId: async () => unsupported("calls.findByProviderCallId"),
       list: async () => unsupported("calls.list"),
       listByMasterAndPeriod: async () => unsupported("calls.listByMasterAndPeriod"),
       update: async () => unsupported("calls.update"),
@@ -146,6 +148,7 @@ function createRepositoryContext(lead: Lead, master: Master = makeMaster()): {
     leads: {
       create: async () => unsupported("leads.create"),
       getById: async (id) => (id === state.lead.id ? state.lead : null),
+      findByCallId: async () => unsupported("leads.findByCallId"),
       list: async () => unsupported("leads.list"),
       listByMasterAndPeriod: async () => unsupported("leads.listByMasterAndPeriod"),
       update: async (id, input) => {

@@ -94,6 +94,12 @@ export default async function MasterDetailPage({
                 <strong>Number:</strong> {assignedNumber.phoneNumber}
               </p>
               <p>
+                <strong>Provider:</strong> {assignedNumber.provider}
+              </p>
+              <p>
+                <strong>Provider number id:</strong> {assignedNumber.providerNumberId ?? "-"}
+              </p>
+              <p>
                 <strong>Status:</strong> <StatusBadge status={assignedNumber.status} />
               </p>
             </>

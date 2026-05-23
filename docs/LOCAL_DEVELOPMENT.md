@@ -16,12 +16,15 @@ Optional future variables:
 
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_WEBHOOK_SECRET`
+- `VAPI_API_KEY`
 - `VAPI_WEBHOOK_SECRET`
 - `OPENAI_API_KEY`
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
 Telegram variables are optional for general development checks. `TELEGRAM_BOT_TOKEN` is required only
 for Telegram-specific operations such as sending a lead card or answering a callback.
+`VAPI_WEBHOOK_SECRET` is required for production Vapi webhooks. Local development can parse and
+simulate Vapi fixture payloads without live Vapi credentials.
 
 Setup steps:
 
@@ -59,6 +62,8 @@ Security notes:
 - `npm run telegram:test-card`
 - `npm run telegram:simulate-accept`
 - `npm run telegram:simulate-spam`
+- `npm run vapi:ready`
+- `npm run vapi:simulate`
 - `npm run lead:status`
 
 ## Database
@@ -180,6 +185,47 @@ Public webhook callback verification:
 7. Run `npm run lead:status`.
 8. Confirm the demo lead status is `ACCEPTED`.
 
+## Vapi Local Testing
+
+Vapi Server URL for deployed or tunneled environments:
+
+```text
+https://YOUR_APP_URL/api/webhooks/vapi
+```
+
+Webhook verification uses the `x-vapi-webhook-secret` header when `VAPI_WEBHOOK_SECRET` is set. The
+route returns `401` for an invalid configured secret. Outside production, missing
+`VAPI_WEBHOOK_SECRET` is allowed for fixture-based local development only.
+
+Check local Vapi readiness without printing secrets:
+
+```bash
+npm run vapi:ready
+```
+
+Simulate the fixture end-of-call report through the parser and application use case:
+
+```bash
+npm run vapi:simulate
+```
+
+Useful options:
+
+```bash
+npm run vapi:simulate -- --all
+npm run vapi:simulate -- --fixture=tests/fixtures/vapi-call-started.json
+npm run vapi:simulate -- --dry-run
+npm run vapi:simulate -- --no-telegram
+```
+
+The simulation creates or updates a `calls` row and creates a `leads` row on end-of-call reports when
+the master can be resolved. Telegram lead-card sending happens only when `TELEGRAM_BOT_TOKEN` and the
+master `telegram_chat_id` are configured; otherwise the use case records a safe skipped-delivery audit
+event.
+
+Current extraction is deterministic, not LLM-based. It uses Vapi summary/transcript fields, simple
+address heuristics, urgency/safety keyword rules, and raw payload persistence for debugging.
+
 ## Expected Workflow
 
 1. Inspect existing project files before changing scripts.
@@ -195,6 +241,8 @@ Run:
 - `npm run typecheck`
 - `npm run test`
 - `npm run env:check`
+- `npm run telegram:ready`
+- `npm run vapi:ready`
 - `npm run db:verify`
 - `npm run smoke:admin-data`
 - `npm run build`

@@ -460,6 +460,16 @@ export class SupabaseAiNumberRepository implements AiNumberRepository {
     return data ? mapAiNumber(data as AiNumberRow) : null;
   }
 
+  async findByPhoneNumber(phoneNumber: string): Promise<AiNumber | null> {
+    const { data, error } = await this.supabase
+      .from("ai_numbers")
+      .select()
+      .eq("phone_number", phoneNumber)
+      .maybeSingle();
+    throwIfError(error, "Find AI number by phone number");
+    return data ? mapAiNumber(data as AiNumberRow) : null;
+  }
+
   async list(): Promise<AiNumber[]> {
     const { data, error } = await this.supabase.from("ai_numbers").select().order("created_at", {
       ascending: false,
@@ -516,6 +526,17 @@ export class SupabaseCallRepository implements CallRepository {
   async getById(id: string): Promise<Call | null> {
     const { data, error } = await this.supabase.from("calls").select().eq("id", id).maybeSingle();
     throwIfError(error, "Get call");
+    return data ? mapCall(data as CallRow) : null;
+  }
+
+  async findByProviderCallId(provider: string, providerCallId: string): Promise<Call | null> {
+    const { data, error } = await this.supabase
+      .from("calls")
+      .select()
+      .eq("provider", provider)
+      .eq("provider_call_id", providerCallId)
+      .maybeSingle();
+    throwIfError(error, "Find call by provider call id");
     return data ? mapCall(data as CallRow) : null;
   }
 
@@ -605,6 +626,18 @@ export class SupabaseLeadRepository implements LeadRepository {
   async getById(id: string): Promise<Lead | null> {
     const { data, error } = await this.supabase.from("leads").select().eq("id", id).maybeSingle();
     throwIfError(error, "Get lead");
+    return data ? mapLead(data as LeadRow) : null;
+  }
+
+  async findByCallId(callId: string): Promise<Lead | null> {
+    const { data, error } = await this.supabase
+      .from("leads")
+      .select()
+      .eq("call_id", callId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    throwIfError(error, "Find lead by call id");
     return data ? mapLead(data as LeadRow) : null;
   }
 
