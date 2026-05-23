@@ -53,6 +53,8 @@ If `safetyFlag` is not `NONE`, the card includes:
 ⚠️ ВАЖНО: возможная опасная ситуация. Клиенту нужно обращаться в аварийную службу / 112.
 ```
 
+Telegram card time is formatted as `dd.MM.yyyy, HH:mm` in `Asia/Almaty`.
+
 ## Inline Buttons
 
 Initial buttons support the pilot lifecycle without making the master type:
@@ -63,8 +65,8 @@ Initial buttons support the pilot lifecycle without making the master type:
 Callback data must stay compact because Telegram limits callback payloads.
 
 Note: Telegram rejected `tel:` inline button URLs during live testing. Lead delivery now avoids a
-phone URL button and keeps the phone number in the card text, including a copy-friendly
-`📞 Позвонить: +7 ...` line. Accept and spam remain inline callback buttons.
+phone URL button and keeps exactly one phone line in the card text. Accept and spam remain inline
+callback buttons.
 
 ## Callback Rules
 

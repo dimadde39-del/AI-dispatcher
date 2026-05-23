@@ -20,10 +20,7 @@ async function main() {
   const action = parseAction(process.argv.slice(2));
   const repositories = createSupabaseRepositoryContext();
   const leads = await repositories.leads.list();
-  const demoLead =
-    leads.find((lead) => lead.customerPhone === "+77007654321" && lead.problem === "Leaking pipe") ??
-    leads[0] ??
-    null;
+  const demoLead = leads.find((lead) => lead.customerPhone === "+77007654321") ?? leads[0] ?? null;
 
   if (!demoLead) {
     throw new Error("No demo lead found. Run npm run seed first.");

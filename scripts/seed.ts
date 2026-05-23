@@ -6,6 +6,10 @@ interface IdRow {
   id: string;
 }
 
+const DEMO_LEAD_AI_SUMMARY =
+  "Клиент сообщил о протечке трубы возле Абая 150. Мастеру нужно перезвонить.";
+const DEMO_LEAD_PROBLEM = "Течет труба под ванной";
+
 function requireId(row: IdRow | null, label: string): string {
   if (!row) {
     throw new Error(`${label} was not returned by Supabase.`);
@@ -153,7 +157,7 @@ async function main() {
         started_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
         ended_at: new Date(Date.now() - 59 * 60 * 1000).toISOString(),
         duration_seconds: 60,
-        transcript: "Demo transcript: client reports a leaking pipe near Abaya 150.",
+        transcript: "Демо-транскрипт: клиент сообщил о протечке трубы возле Абая 150.",
         recording_url: null,
         raw_payload: {
           source: "seed",
@@ -183,16 +187,27 @@ async function main() {
       call_id: callId,
       customer_name: "Demo Client",
       customer_phone: "+77007654321",
-      problem: "Leaking pipe",
+      problem: DEMO_LEAD_PROBLEM,
       address: "Abaya 150",
       urgency: "HIGH",
-      ai_summary: "Client reports a leaking pipe near Abaya 150. Master should call back.",
+      ai_summary: DEMO_LEAD_AI_SUMMARY,
       ai_score: "HOT",
       safety_flag: "NONE",
       status: "NEW",
     });
     if (leadCreateError) {
       throw leadCreateError;
+    }
+  } else {
+    const { error: leadUpdateError } = await supabase
+      .from("leads")
+      .update({
+        problem: DEMO_LEAD_PROBLEM,
+        ai_summary: DEMO_LEAD_AI_SUMMARY,
+      })
+      .eq("id", leadRow.id);
+    if (leadUpdateError) {
+      throw leadUpdateError;
     }
   }
 

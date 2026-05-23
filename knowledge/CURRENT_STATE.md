@@ -57,7 +57,7 @@ The product sells saved orders, not an "AI bot".
 ## Implemented Telegram Interface
 
 - Telegram Bot API client for `sendMessage`, `editMessageText`, and `answerCallbackQuery`.
-- Pure Russian lead-card presenter with accept/spam callback buttons and optional `tel:` call button.
+- Pure Russian lead-card presenter with accept/spam callback buttons and one formatted phone line.
 - Compact callback data parser for `lead:accept:{leadId}` and `lead:spam:{leadId}`.
 - Webhook secret verifier for `X-Telegram-Bot-Api-Secret-Token`.
 - Application use case to send a lead card, persist a `telegram_messages` row, and write lead/audit events.
@@ -69,7 +69,9 @@ The product sells saved orders, not an "AI bot".
 - Demo master chat-id setup now sanitizes accidental surrounding angle brackets and rejects
   non-numeric Telegram chat ids.
 - Telegram lead cards no longer include a `tel:` URL button because Telegram rejected it during live
-  testing. Phone numbers remain visible in the card text with a copy-friendly call line.
+  testing. Phone numbers remain visible once in the card text.
+- Telegram card time is formatted as `dd.MM.yyyy, HH:mm` in `Asia/Almaty`.
+- Demo lead problem and summary are Russian for live Telegram smoke tests.
 - Admin leads page can send/resend cards, shows Telegram send state, and disables sending when token/chat id is missing.
 - Admin master detail page shows `telegram_chat_id` and Telegram readiness.
 
@@ -78,7 +80,7 @@ The product sells saved orders, not an "AI bot".
 - General env validation passes.
 - Telegram-specific readiness sees `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as present without printing values.
 - `telegram:get-updates` returned the pilot chat id, and the demo master was updated with the sanitized numeric chat id.
-- Live `npm run telegram:test-card` sent a Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
+- Latest live `npm run telegram:test-card` sent a polished Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
 - Local accept callback simulation is idempotent against the already accepted demo lead.
 
 ## Verified Live Data

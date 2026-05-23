@@ -20,10 +20,7 @@ export async function POST() {
 
   const repositories = createSupabaseRepositoryContext();
   const leads = await repositories.leads.list();
-  const demoLead =
-    leads.find((lead) => lead.customerPhone === "+77007654321" && lead.problem === "Leaking pipe") ??
-    leads[0] ??
-    null;
+  const demoLead = leads.find((lead) => lead.customerPhone === "+77007654321") ?? leads[0] ?? null;
 
   if (!demoLead) {
     return NextResponse.json({ ok: false, error: "No demo lead found." }, { status: 404 });

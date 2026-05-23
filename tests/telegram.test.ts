@@ -21,10 +21,12 @@ import {
   parseTelegramLeadCallbackData,
 } from "../src/infrastructure/telegram/telegram-callback-parser";
 import { sanitizeTelegramChatId } from "../src/infrastructure/telegram/telegram-chat-id";
+import { formatTelegramDate } from "../src/infrastructure/telegram/telegram-date";
 import { buildTelegramLeadCardMessage } from "../src/infrastructure/telegram/telegram-message-builder";
 import { normalizeKazakhstanPhoneForDisplay } from "../src/infrastructure/telegram/telegram-phone";
 
 const timestamp = "2026-05-23T00:00:00.000Z";
+const russianDemoSummary = "Клиент сообщил о протечке трубы возле Абая 150. Мастеру нужно перезвонить.";
 
 function makeMaster(overrides: Partial<Master> = {}): Master {
   return {
@@ -51,7 +53,7 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
     problem: "Течет труба под ванной",
     address: "Абая 150",
     urgency: "HIGH",
-    aiSummary: "Клиент просит перезвонить как можно скорее.",
+    aiSummary: russianDemoSummary,
     aiScore: "HOT",
     safetyFlag: "NONE",
     status: "NEW",
@@ -220,9 +222,13 @@ test("buildTelegramLeadCardMessage formats a Russian lead card with buttons", ()
   assert.match(message.text, /🚨 НОВЫЙ ПРОПУЩЕННЫЙ ЗВОНОК/);
   assert.match(message.text, /👤 Клиент: Demo Client/);
   assert.match(message.text, /📞 Телефон: \+7 700 765 43 21/);
-  assert.match(message.text, /📞 Позвонить: \+7 700 765 43 21/);
   assert.match(message.text, /🛠 Проблема: Течет труба под ванной/);
+  assert.match(message.text, /⏰ Время: 23\.05\.2026, 05:00/);
   assert.match(message.text, /🔥 AI-Оценка: Горячий/);
+  assert.match(message.text, new RegExp(russianDemoSummary));
+  assert.doesNotMatch(message.text, /Client reports/);
+  assert.doesNotMatch(message.text, /Позвонить:/);
+  assert.equal((message.text.match(/\+7 700 765 43 21/g) ?? []).length, 1);
   assert.equal(message.replyMarkup?.inline_keyboard[0]?.[0]?.callback_data, `lead:accept:${lead.id}`);
   assert.equal(message.replyMarkup?.inline_keyboard[0]?.[1]?.callback_data, `lead:spam:${lead.id}`);
   assert.equal(message.replyMarkup?.inline_keyboard.flat().some((button) => Boolean(button.url)), false);
@@ -333,4 +339,8 @@ test("normalizeKazakhstanPhoneForDisplay formats simple Kazakhstan numbers", () 
   assert.equal(normalizeKazakhstanPhoneForDisplay("+77007654321"), "+7 700 765 43 21");
   assert.equal(normalizeKazakhstanPhoneForDisplay("77007654321"), "+7 700 765 43 21");
   assert.equal(normalizeKazakhstanPhoneForDisplay(null), "Не указан");
+});
+
+test("formatTelegramDate uses Asia/Almaty deterministically", () => {
+  assert.equal(formatTelegramDate("2026-05-23T00:00:00.000Z"), "23.05.2026, 05:00");
 });

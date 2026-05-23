@@ -142,7 +142,7 @@ If `TELEGRAM_BOT_TOKEN` or `telegram_chat_id` is missing, live Telegram sending 
 Pure formatter, parser, and callback tests still run without Telegram credentials.
 
 Telegram rejected `tel:` inline button URLs during live testing, so the lead card does not include a
-phone URL button. The phone number remains visible and copy-friendly in the card text.
+phone URL button. The phone number remains visible once in the card text.
 
 Simulate Telegram callback handling before a public webhook exists:
 

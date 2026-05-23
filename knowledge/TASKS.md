@@ -27,7 +27,7 @@ Build the Vapi webhook foundation after the live Telegram card smoke test.
 - Live Supabase admin-data smoke check.
 - Lightweight domain/use-case tests.
 - Telegram Bot API client and master-interface adapter.
-- Russian lead card presenter with call, accept, and spam buttons.
+- Russian lead card presenter with formatted phone text plus accept and spam buttons.
 - Telegram callback parser and webhook secret verifier.
 - Lead-card send use case with `telegram_messages`, `lead_events`, and `audit_logs` persistence.
 - Callback handler use case that reuses existing accept/spam transitions and edits Telegram cards.
@@ -38,6 +38,7 @@ Build the Vapi webhook foundation after the live Telegram card smoke test.
 - Local Telegram accept callback simulation verified against Supabase.
 - Demo master chat-id sanitizer rejects malformed chat ids and cleans accidental surrounding angle brackets.
 - Live Telegram card send succeeded and persisted a `LEAD_CARD` Telegram message row.
+- Telegram card polish: phone appears once, demo problem and summary are Russian, and time uses `Asia/Almaty`.
 
 ## Not Started Yet
 

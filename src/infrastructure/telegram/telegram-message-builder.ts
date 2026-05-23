@@ -1,6 +1,7 @@
 import type { Call, Lead, Master } from "@/domain";
 import type { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from "./telegram-types";
 import { buildTelegramLeadCallbackData } from "./telegram-callback-parser";
+import { formatTelegramDate } from "./telegram-date";
 import { normalizeKazakhstanPhoneForDisplay } from "./telegram-phone";
 
 export type TelegramLeadCardStatus = "ACCEPTED" | "SPAM";
@@ -34,14 +35,6 @@ const aiScoreLabels: Record<Lead["aiScore"], string> = {
 function fallback(value: string | null | undefined, emptyLabel: string): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : emptyLabel;
-}
-
-function formatLeadCreatedAt(value: string): string {
-  return new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Asia/Almaty",
-  }).format(new Date(value));
 }
 
 function phoneForLead(lead: Lead, call: Call | null | undefined): string | null {
@@ -95,13 +88,9 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
     `🛠 Проблема: ${lead.problem}`,
     `📍 Адрес: ${fallback(lead.address, "Не указан")}`,
     `⏱ Срочность: ${urgencyLabels[lead.urgency]}`,
-    `⏰ Время: ${formatLeadCreatedAt(lead.createdAt)}`,
+    `⏰ Время: ${formatTelegramDate(lead.createdAt)}`,
     `🔥 AI-Оценка: ${aiScoreLabels[lead.aiScore]}`,
   ];
-
-  if (customerPhone) {
-    lines.splice(4, 0, `📞 Позвонить: ${displayPhone}`);
-  }
 
   if (lead.safetyFlag !== "NONE") {
     lines.push(
