@@ -9,6 +9,7 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
+    "env:check": "tsx scripts/env-check.ts",
     "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {

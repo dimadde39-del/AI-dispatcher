@@ -9,6 +9,7 @@ The app now uses Next.js 15 App Router, TypeScript, Supabase Postgres, and Zod.
 Copy `.env.example` to `.env.local` and fill:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Optional future variables:
@@ -20,6 +21,21 @@ Optional future variables:
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
 
+Setup steps:
+
+1. Copy `.env.example` to `.env.local`.
+2. Paste the Supabase project URL into `NEXT_PUBLIC_SUPABASE_URL`.
+3. Paste the Supabase anon key into `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+4. Paste the Supabase service role key into `SUPABASE_SERVICE_ROLE_KEY`.
+5. Optionally paste `SUPABASE_DB_URL` for direct migration scripts.
+6. Never commit `.env.local`.
+
+Security notes:
+
+- `SUPABASE_SERVICE_ROLE_KEY` is server-side only.
+- Never prefix server-only secrets with `NEXT_PUBLIC_`.
+- Do not print or copy secret values into docs, migrations, logs, or screenshots.
+
 ## Commands
 
 - `npm install`
@@ -27,6 +43,7 @@ Server-only variables are validated in `src/lib/env.ts` and should not be import
 - `npm run lint`
 - `npm run typecheck`
 - `npm run test`
+- `npm run env:check`
 - `npm run build`
 - `npm run seed`
 
