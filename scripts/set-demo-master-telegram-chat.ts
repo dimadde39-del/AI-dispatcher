@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { createSupabaseRepositoryContext } from "../src/infrastructure/db";
+import { sanitizeTelegramChatId } from "../src/infrastructure/telegram";
 import { loadEnvFiles } from "./load-env";
 
 const DEMO_MASTER_PHONE = "+77001234567";
@@ -29,7 +29,7 @@ async function main() {
     );
   }
 
-  const chatId = z.string().min(1).parse(rawChatId);
+  const chatId = sanitizeTelegramChatId(rawChatId);
 
   const repositories = createSupabaseRepositoryContext();
   const master = await repositories.masters.findByPhone(DEMO_MASTER_PHONE);

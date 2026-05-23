@@ -1,6 +1,6 @@
 import { sendLeadCardToMaster } from "../src/application";
 import { createSupabaseRepositoryContext } from "../src/infrastructure/db";
-import { createTelegramMasterInterface } from "../src/infrastructure/telegram";
+import { createTelegramMasterInterface, sanitizeTelegramChatId } from "../src/infrastructure/telegram";
 import { loadEnvFiles } from "./load-env";
 
 async function main() {
@@ -20,7 +20,7 @@ async function main() {
   const testChatId = process.env.TELEGRAM_TEST_CHAT_ID?.trim();
   if (testChatId) {
     await repositories.masters.update(demoLead.masterId, {
-      telegramChatId: testChatId,
+      telegramChatId: sanitizeTelegramChatId(testChatId),
     });
   }
 

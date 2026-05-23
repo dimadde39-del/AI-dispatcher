@@ -57,11 +57,14 @@ If `safetyFlag` is not `NONE`, the card includes:
 
 Initial buttons support the pilot lifecycle without making the master type:
 
-- `📞 Позвонить`: `tel:{customerPhone}` when a customer phone exists.
 - `✅ Взять заказ`: `lead:accept:{leadId}`.
 - `❌ Спам / Не мой профиль`: `lead:spam:{leadId}`.
 
 Callback data must stay compact because Telegram limits callback payloads.
+
+Note: Telegram rejected `tel:` inline button URLs during live testing. Lead delivery now avoids a
+phone URL button and keeps the phone number in the card text, including a copy-friendly
+`📞 Позвонить: +7 ...` line. Accept and spam remain inline callback buttons.
 
 ## Callback Rules
 
@@ -142,6 +145,10 @@ npm run telegram:ready
 npm run telegram:get-updates
 npm run telegram:set-demo-chat -- --chat-id=<chat id>
 ```
+
+Do not type the angle brackets literally. If that happens accidentally, the helper sanitizes
+surrounding angle brackets, so `--chat-id=<7436474652>` becomes `7436474652`. Inputs that are not
+numeric Telegram chat ids are rejected.
 
 `telegram:get-updates` uses `TELEGRAM_BOT_TOKEN` without printing it. It prints only a safe summary:
 chat id, chat type, username, first name, and message text when available. If no updates are found,

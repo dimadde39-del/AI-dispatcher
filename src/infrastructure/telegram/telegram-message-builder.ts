@@ -1,6 +1,7 @@
 import type { Call, Lead, Master } from "@/domain";
 import type { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from "./telegram-types";
 import { buildTelegramLeadCallbackData } from "./telegram-callback-parser";
+import { normalizeKazakhstanPhoneForDisplay } from "./telegram-phone";
 
 export type TelegramLeadCardStatus = "ACCEPTED" | "SPAM";
 
@@ -47,10 +48,6 @@ function phoneForLead(lead: Lead, call: Call | null | undefined): string | null 
   return lead.customerPhone ?? call?.customerPhone ?? null;
 }
 
-function telUrl(phone: string): string {
-  return `tel:${phone.replace(/[^\d+]/g, "")}`;
-}
-
 function statusLine(status: TelegramLeadCardStatus | undefined): string | null {
   if (status === "ACCEPTED") {
     return "✅ Статус: заказ взят мастером.";
@@ -63,17 +60,8 @@ function statusLine(status: TelegramLeadCardStatus | undefined): string | null {
   return null;
 }
 
-function buildKeyboard(input: TelegramLeadCardInput, customerPhone: string | null): TelegramInlineKeyboardMarkup | undefined {
+function buildKeyboard(input: TelegramLeadCardInput): TelegramInlineKeyboardMarkup | undefined {
   const rows: TelegramInlineKeyboardButton[][] = [];
-
-  if (customerPhone) {
-    rows.push([
-      {
-        text: "📞 Позвонить",
-        url: telUrl(customerPhone),
-      },
-    ]);
-  }
 
   if (!input.status) {
     rows.push([
@@ -98,17 +86,22 @@ function buildKeyboard(input: TelegramLeadCardInput, customerPhone: string | nul
 export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): TelegramLeadCardMessage {
   const { lead, call } = input;
   const customerPhone = phoneForLead(lead, call);
+  const displayPhone = normalizeKazakhstanPhoneForDisplay(customerPhone);
   const lines = [
     "🚨 НОВЫЙ ПРОПУЩЕННЫЙ ЗВОНОК",
     "",
     `👤 Клиент: ${fallback(lead.customerName, "Не указано")}`,
-    `📞 Телефон: ${fallback(customerPhone, "Не указан")}`,
+    `📞 Телефон: ${displayPhone}`,
     `🛠 Проблема: ${lead.problem}`,
     `📍 Адрес: ${fallback(lead.address, "Не указан")}`,
     `⏱ Срочность: ${urgencyLabels[lead.urgency]}`,
     `⏰ Время: ${formatLeadCreatedAt(lead.createdAt)}`,
     `🔥 AI-Оценка: ${aiScoreLabels[lead.aiScore]}`,
   ];
+
+  if (customerPhone) {
+    lines.splice(4, 0, `📞 Позвонить: ${displayPhone}`);
+  }
 
   if (lead.safetyFlag !== "NONE") {
     lines.push(
@@ -126,6 +119,6 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
 
   return {
     text: lines.join("\n"),
-    replyMarkup: buildKeyboard(input, customerPhone),
+    replyMarkup: buildKeyboard(input),
   };
 }

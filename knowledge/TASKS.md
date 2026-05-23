@@ -11,7 +11,7 @@
 
 ## Current Task
 
-Complete live Telegram pilot setup after the target Telegram account sends `/start` to the bot.
+Build the Vapi webhook foundation after the live Telegram card smoke test.
 
 ## Done
 
@@ -36,6 +36,8 @@ Complete live Telegram pilot setup after the target Telegram account sends `/sta
 - Telegram formatter/parser/callback tests.
 - Telegram readiness, safe getUpdates, demo chat-id update, and local callback simulation scripts.
 - Local Telegram accept callback simulation verified against Supabase.
+- Demo master chat-id sanitizer rejects malformed chat ids and cleans accidental surrounding angle brackets.
+- Live Telegram card send succeeded and persisted a `LEAD_CARD` Telegram message row.
 
 ## Not Started Yet
 
@@ -45,4 +47,3 @@ Complete live Telegram pilot setup after the target Telegram account sends `/sta
 - Lead extraction from transcripts.
 - Production pilot operations tooling.
 - Telegram `/start` onboarding.
-- Live Telegram card send to a real pilot chat, pending a retrieved chat id from `/start` or `TELEGRAM_TEST_CHAT_ID`.

@@ -66,6 +66,10 @@ The product sells saved orders, not an "AI bot".
 - Local-only `POST /api/test/telegram-lead-card` route and `npm run telegram:test-card`.
 - Telegram live setup helper scripts for readiness, safe `getUpdates`, demo master chat-id update,
   and local callback simulation.
+- Demo master chat-id setup now sanitizes accidental surrounding angle brackets and rejects
+  non-numeric Telegram chat ids.
+- Telegram lead cards no longer include a `tel:` URL button because Telegram rejected it during live
+  testing. Phone numbers remain visible in the card text with a copy-friendly call line.
 - Admin leads page can send/resend cards, shows Telegram send state, and disables sending when token/chat id is missing.
 - Admin master detail page shows `telegram_chat_id` and Telegram readiness.
 
@@ -73,9 +77,9 @@ The product sells saved orders, not an "AI bot".
 
 - General env validation passes.
 - Telegram-specific readiness sees `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as present without printing values.
-- `telegram:get-updates` currently returned no message updates, so a real pilot chat id has not yet been retrieved through the bot.
-- Local callback simulation passed for the demo lead and changed its status from `NEW` to `ACCEPTED` through the existing Telegram callback use case with a mocked Telegram client.
-- Live Telegram lead-card sending remains blocked until the target Telegram account sends `/start` to the bot or `TELEGRAM_TEST_CHAT_ID` is provided.
+- `telegram:get-updates` returned the pilot chat id, and the demo master was updated with the sanitized numeric chat id.
+- Live `npm run telegram:test-card` sent a Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
+- Local accept callback simulation is idempotent against the already accepted demo lead.
 
 ## Verified Live Data
 
@@ -97,4 +101,4 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Send `/start` to the Telegram bot from the pilot account, run `npm run telegram:get-updates`, set the demo master chat id, send the test card, then start the Vapi webhook foundation when ready.
+Use the live Telegram card with the pilot master, then start the Vapi webhook foundation when ready.

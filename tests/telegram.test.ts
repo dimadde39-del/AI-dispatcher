@@ -20,7 +20,9 @@ import {
   buildTelegramLeadCallbackData,
   parseTelegramLeadCallbackData,
 } from "../src/infrastructure/telegram/telegram-callback-parser";
+import { sanitizeTelegramChatId } from "../src/infrastructure/telegram/telegram-chat-id";
 import { buildTelegramLeadCardMessage } from "../src/infrastructure/telegram/telegram-message-builder";
+import { normalizeKazakhstanPhoneForDisplay } from "../src/infrastructure/telegram/telegram-phone";
 
 const timestamp = "2026-05-23T00:00:00.000Z";
 
@@ -217,12 +219,13 @@ test("buildTelegramLeadCardMessage formats a Russian lead card with buttons", ()
 
   assert.match(message.text, /🚨 НОВЫЙ ПРОПУЩЕННЫЙ ЗВОНОК/);
   assert.match(message.text, /👤 Клиент: Demo Client/);
-  assert.match(message.text, /📞 Телефон: \+7 \(700\) 765-43-21/);
+  assert.match(message.text, /📞 Телефон: \+7 700 765 43 21/);
+  assert.match(message.text, /📞 Позвонить: \+7 700 765 43 21/);
   assert.match(message.text, /🛠 Проблема: Течет труба под ванной/);
   assert.match(message.text, /🔥 AI-Оценка: Горячий/);
-  assert.equal(message.replyMarkup?.inline_keyboard[0]?.[0]?.url, "tel:+77007654321");
-  assert.equal(message.replyMarkup?.inline_keyboard[1]?.[0]?.callback_data, `lead:accept:${lead.id}`);
-  assert.equal(message.replyMarkup?.inline_keyboard[1]?.[1]?.callback_data, `lead:spam:${lead.id}`);
+  assert.equal(message.replyMarkup?.inline_keyboard[0]?.[0]?.callback_data, `lead:accept:${lead.id}`);
+  assert.equal(message.replyMarkup?.inline_keyboard[0]?.[1]?.callback_data, `lead:spam:${lead.id}`);
+  assert.equal(message.replyMarkup?.inline_keyboard.flat().some((button) => Boolean(button.url)), false);
 });
 
 test("buildTelegramLeadCardMessage uses fallbacks and safety warning", () => {
@@ -312,4 +315,22 @@ test("handleTelegramLeadCallback is idempotent for an already accepted lead", as
   assert.equal(answers[0]?.text, "Заказ уже взят.");
   assert.equal(state.leadEvents.length, 0);
   assert.equal(state.auditLogs.length, 0);
+});
+
+test("sanitizeTelegramChatId accepts plain and accidental angle-bracket input", () => {
+  assert.equal(sanitizeTelegramChatId("7436474652"), "7436474652");
+  assert.equal(sanitizeTelegramChatId("<7436474652>"), "7436474652");
+  assert.equal(sanitizeTelegramChatId(" <7436474652> "), "7436474652");
+});
+
+test("sanitizeTelegramChatId rejects invalid input", () => {
+  assert.throws(() => sanitizeTelegramChatId("chat-7436474652"));
+  assert.throws(() => sanitizeTelegramChatId("<7436474652"));
+  assert.throws(() => sanitizeTelegramChatId("7436 474652"));
+});
+
+test("normalizeKazakhstanPhoneForDisplay formats simple Kazakhstan numbers", () => {
+  assert.equal(normalizeKazakhstanPhoneForDisplay("+77007654321"), "+7 700 765 43 21");
+  assert.equal(normalizeKazakhstanPhoneForDisplay("77007654321"), "+7 700 765 43 21");
+  assert.equal(normalizeKazakhstanPhoneForDisplay(null), "Не указан");
 });

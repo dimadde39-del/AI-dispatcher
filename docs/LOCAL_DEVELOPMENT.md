@@ -116,6 +116,9 @@ Helper command:
 npm run telegram:set-demo-chat -- --chat-id=<chat id>
 ```
 
+Do not include the angle brackets literally when typing the command. The helper now sanitizes
+accidental surrounding angle brackets, but invalid non-numeric chat ids are rejected.
+
 Alternative using an env value:
 
 ```bash
@@ -137,6 +140,9 @@ curl -X POST "http://localhost:3000/api/test/telegram-lead-card"
 
 If `TELEGRAM_BOT_TOKEN` or `telegram_chat_id` is missing, live Telegram sending is expected to fail.
 Pure formatter, parser, and callback tests still run without Telegram credentials.
+
+Telegram rejected `tel:` inline button URLs during live testing, so the lead card does not include a
+phone URL button. The phone number remains visible and copy-friendly in the card text.
 
 Simulate Telegram callback handling before a public webhook exists:
 
