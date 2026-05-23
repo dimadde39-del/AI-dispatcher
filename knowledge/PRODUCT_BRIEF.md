@@ -2,6 +2,8 @@
 
 ## Positioning
 
+We sell saved orders, not “AI bot”.
+
 AI Dispatcher sells saved orders, not an "AI bot".
 
 The product helps individual field service masters and small teams in Kazakhstan capture leads they miss while working, driving, or speaking with another client.
@@ -16,6 +18,8 @@ The product helps individual field service masters and small teams in Kazakhstan
 - Conditioner installer.
 
 ## Core Flow
+
+missed call -> forwarding -> AI dispatcher -> lead extraction -> Telegram card -> master accepts -> value report
 
 1. Client calls a master.
 2. Master misses the call or is busy.
@@ -33,6 +37,8 @@ Accepted leads captured from missed calls.
 ## Product Promise
 
 The master should feel that AI Dispatcher quietly protects revenue while they are busy. The product must make saved orders visible and easy to act on.
+
+Raw source framing: the strongest demo is not "AI talked"; it is "this order would have gone to the next OLX listing, and now the master has a qualified Telegram lead."
 
 ## Non-Goals For Now
 

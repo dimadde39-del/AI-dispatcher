@@ -6,14 +6,45 @@ Pre-foundation setup.
 
 The project is establishing agent rules, knowledge docs, architecture boundaries, and development workflow before product code is built.
 
-## Next Milestones
+## v0 Foundation
 
-1. Product foundation: DB schema, domain types, repositories, admin skeleton.
-2. Telegram interface: lead card, callbacks, status updates.
-3. Vapi webhook: call started/ended, transcript, recording.
-4. Lead extraction: strict JSON, Zod validation, fallback.
-5. Reports: weekly value reminders.
-6. Pilot operations tooling.
+- DB schema.
+- Domain types and status enums.
+- Repository interfaces and Supabase implementations.
+- Internal admin skeleton.
+- Telegram lead-card structure.
+- Pilot operations basics.
+
+## v1 AI Call Capture
+
+- Vapi webhook for call started/ended, transcript, and recording.
+- Lead extraction with strict JSON, Zod validation, and fallback review.
+- Telegram lead cards with inline buttons and status updates.
+- Weekly value reminders.
+
+## v2 Anti-No-Show Confirmations
+
+- Confirmation flow before scheduled visits.
+- Telegram warning when a customer cancels or does not confirm.
+- No WhatsApp/SMS client notification architecture until explicitly started.
+
+## v3 Payments/Deposits
+
+- Deposit or prepayment exploration.
+- Billing provider integration only when this phase starts.
+- Clear liability and refund rules before implementation.
+
+## v4 CRM/Upsell
+
+- Lightweight customer and job history for masters.
+- Repeat-order reminders.
+- Upsell features only after call capture is working.
+
+## v5 Marketplace
+
+- Marketplace only after a strong supply base.
+- Raw sources suggest waiting until there are many loyal active masters.
+- Do not add marketplace architecture in v0/v1.
 
 ## Deferred
 

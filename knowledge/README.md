@@ -18,3 +18,7 @@ Use it as a lightweight operating system:
 Current phase: pre-foundation setup.
 
 Next step after this task: build product foundation.
+
+## Raw Source Rule
+
+Files under `knowledge/raw/` are canonical source material. Do not rewrite, normalize, translate, or clean them in place. Create concise working summaries in `knowledge/wiki/` and update operational docs when raw sources change the project understanding.

@@ -14,6 +14,13 @@ Next step after this task: build product foundation.
 
 Do not build product features until the foundation phase starts.
 
+## Source Of Truth
+
+- `knowledge/raw/` contains canonical raw product source material.
+- Agents must read relevant raw docs before making product, architecture, safety, or roadmap decisions.
+- Do not rewrite, normalize, or clean up raw files.
+- Working summaries belong in `knowledge/`, `knowledge/wiki/`, and `docs/`.
+
 ## Active Surfaces
 
 - Backend/API.
@@ -40,6 +47,7 @@ Use layered architecture:
 - `src/domain`: pure business types, entities, enums, value objects, and policies.
 - `src/application`: use cases, orchestration, ports, and application services.
 - `src/infrastructure`: Supabase, Telegram, Vapi, provider adapters, persistence implementations.
+- `src/interfaces`: provider-neutral ports and shared DTOs when needed.
 - `src/app/api`: thin route handlers only.
 - `src/app/admin`: internal admin UI only.
 
@@ -49,7 +57,7 @@ Rules:
 - No Supabase queries directly in React components.
 - No provider-specific logic in `src/domain` or `src/application`.
 - Vapi must be behind a `VoiceProvider` abstraction.
-- Telegram must be behind a notification or master-interface abstraction.
+- Telegram must be behind a `Notification` or `MasterInterface` abstraction.
 - Save raw provider payloads for debugging before normalizing them.
 - Prefer explicit TypeScript types and Zod validation.
 - Avoid `any` unless absolutely unavoidable and explain why near the boundary.
@@ -95,6 +103,7 @@ Do not invent unavailable scripts. Inspect `package.json` before running or addi
 - Keep docs concise and operational.
 - Do not update knowledge for tiny cosmetic changes.
 - Preserve raw sources under `knowledge/raw/`; generated summaries belong in `knowledge/wiki/`.
+- If raw sources and working docs disagree, preserve the raw source and record the decision or open question in working docs.
 
 ## Provider Abstraction Rules
 
@@ -110,7 +119,7 @@ Do not invent unavailable scripts. Inspect `package.json` before running or addi
 - Supabase Postgres is the initial system of record.
 - Schema changes must be represented as migrations once a stack exists.
 - Prefer explicit tables, foreign keys, timestamps, and status enums.
-- Store sensitive raw call payloads, transcripts, and recordings carefully with limited access.
+- Store sensitive raw call payloads, transcripts, recordings, phone numbers, names, and addresses carefully with limited access.
 - Do not query Supabase directly from React components.
 - Repositories belong in infrastructure and expose application-level methods.
 - Audit important changes to masters, leads, calls, subscriptions, and provider callbacks.
@@ -127,6 +136,7 @@ Do not invent unavailable scripts. Inspect `package.json` before running or addi
 
 - Telegram is the primary master interface for early pilots.
 - Lead cards must be short, actionable, and easy to accept or reject.
+- Use inline buttons for actions such as accept, decline, call later, complete, lost, or spam once those states exist.
 - Callback handlers must be idempotent.
 - Never place sensitive diagnostic payloads in Telegram messages.
 - Keep Telegram formatting in an infrastructure adapter or presenter.
@@ -139,7 +149,7 @@ Do not invent unavailable scripts. Inspect `package.json` before running or addi
 - The AI must not give repair advice.
 - For gas, fire, dangerous electric situations, or immediate danger, the AI must tell users to call 112 or local emergency services.
 - Treat personal data carefully.
-- Raw call payloads, transcripts, recordings, phone numbers, addresses, and Telegram identifiers are sensitive.
+- Raw call payloads, transcripts, recordings, phone numbers, names, addresses, and Telegram identifiers are sensitive.
 - Collect only data needed to create and route a lead.
 
 ## What Agents Must Never Do
@@ -151,4 +161,5 @@ Do not invent unavailable scripts. Inspect `package.json` before running or addi
 - Do not couple the application layer to Vapi, Telegram, Supabase SDKs, or provider payload shapes.
 - Do not expose sensitive raw transcripts, recordings, addresses, or phone numbers in public UI or logs.
 - Do not invent prices, arrival guarantees, or repair instructions.
+- Do not promise illegal locksmith activity or any service that should require document verification.
 - Do not create broad refactors while implementing narrow tasks.

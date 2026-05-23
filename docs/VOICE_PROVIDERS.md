@@ -1,10 +1,14 @@
 # Voice Providers
 
-Vapi webhook integration is planned later, behind a provider abstraction.
+Vapi is the first planned voice-provider path. Pipecat/self-host voice is a later optimization. Both must stay behind a `VoiceProvider` abstraction.
 
 ## VoiceProvider Principle
 
 Application code should not depend directly on Vapi SDKs, webhook payload shapes, or provider-specific status names.
+
+Vapi first means the initial integration should prioritize reliability, webhooks, transcripts, recordings, and speed to pilot. It does not mean Vapi concepts are allowed into domain or application code.
+
+Pipecat/self-host later means future margin optimization and deeper voice control. It remains deferred until the product proves demand.
 
 ## Adapter Responsibilities
 
@@ -24,4 +28,8 @@ Application code should not depend directly on Vapi SDKs, webhook payload shapes
 
 ## Deferred
 
-Self-host Pipecat voice stack is deferred. Do not add it until explicitly started by a future task.
+Self-host Pipecat voice stack is deferred. Do not add it until explicitly started by a future task, and even then keep it behind the same `VoiceProvider` port.
+
+## Telephony Notes
+
+Raw sources warn that foreign SIP/Twilio-style assumptions can fail with Kazakhstan forwarding. Future implementation should test local SIP options before hard-coding provider assumptions.

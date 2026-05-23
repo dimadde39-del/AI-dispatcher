@@ -26,6 +26,7 @@ Use this structure once product code begins:
 - `AssistantProfile`: AI behavior and call script configuration for a master or segment.
 - `AiNumber`: phone number assigned for forwarding or AI answering.
 - `Call`: inbound forwarded call and provider lifecycle state.
+- `CallEvent`: provider or application event in a call lifecycle.
 - `Lead`: extracted customer request that can be accepted by a master.
 - `LeadEvent`: state transition or operational note for a lead.
 - `TelegramMessage`: outbound or inbound Telegram interaction metadata.
@@ -36,7 +37,7 @@ Use this structure once product code begins:
 ## Status Enums
 
 - `MasterStatus`: `pending`, `active`, `paused`, `blocked`.
-- `LeadStatus`: `new`, `sent`, `accepted`, `declined`, `expired`, `failed`.
+- `LeadStatus`: `new`, `sent`, `accepted`, `callback_pending`, `completed`, `lost`, `spam`, `declined`, `expired`, `failed`.
 - `CallStatus`: `received`, `in_progress`, `completed`, `failed`, `abandoned`.
 - `AiNumberStatus`: `available`, `assigned`, `forwarding_active`, `paused`, `retired`.
 - `SubscriptionStatus`: `trialing`, `active`, `past_due`, `paused`, `canceled`.
@@ -49,6 +50,13 @@ Use this structure once product code begins:
 - Provider IDs should be stored but not used as domain identities.
 - Use cases should work with normalized commands, events, and entities.
 - Adapters should be replaceable without changing domain rules.
+
+## Source-Informed Notes
+
+- Vapi is the first voice-provider path for speed and reliability.
+- Pipecat/self-host voice is a later cost and margin optimization, not current architecture.
+- Kazakhstan local SIP/telephony constraints matter; avoid assuming Twilio-style foreign numbers will work for forwarding.
+- Raw sources mention SQLite in an earlier architecture note; this operating system chooses Supabase Postgres as the foundation and records that as an ADR.
 
 ## Initial Data Flow
 

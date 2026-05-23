@@ -6,11 +6,11 @@ Accepted.
 
 ## Context
 
-Vapi is expected for voice webhook integration later, but the product should not let provider-specific payload shapes or SDK calls leak into core business logic. Voice providers may change as cost, latency, language support, or operational needs evolve.
+Vapi is expected as the first voice-provider path, but the product should not let provider-specific payload shapes or SDK calls leak into core business logic. Voice providers may change as cost, latency, language support, margin, or operational needs evolve. Raw sources also describe a later Pipecat/self-host path.
 
 ## Decision
 
-Place Vapi behind a `VoiceProvider` abstraction. Vapi webhooks and payload parsing belong in infrastructure adapters. Application use cases receive normalized call events and transcript data.
+Place Vapi and any later Pipecat/self-host provider behind a `VoiceProvider` abstraction. Vapi webhooks and payload parsing belong in infrastructure adapters. Application use cases receive normalized call events and transcript data.
 
 ## Consequences
 

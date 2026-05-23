@@ -21,3 +21,6 @@
 - What Supabase project and environments will be used for dev, staging, and production?
 - What webhook authentication scheme will be used for Vapi and Telegram?
 - What audit log events are required for launch?
+- Raw `06_TECHNICAL_ARCHITECTURE.md` proposes SQLite and Beeline Cloud, while the current operating-system task requires Supabase. Confirm whether Supabase remains final for v0 foundation.
+- Raw files appear encoding-garbled when read normally. Confirm whether to preserve as-is forever or add clean translated copies outside `knowledge/raw/`.
+- Which local Kazakhstan SIP provider should be tested first: Zadarma KZ, OnlinePBX.kz, or Kazakhtelecom?

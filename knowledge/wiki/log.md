@@ -4,3 +4,4 @@
 
 - Created initial wiki structure for agent-maintained summaries.
 - Established that raw sources remain canonical in `knowledge/raw/`.
+- Read all markdown files in `knowledge/raw/` and added source-informed working summaries without editing raw files.
