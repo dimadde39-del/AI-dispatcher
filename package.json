@@ -17,9 +17,12 @@
     "telegram:ready": "tsx scripts/telegram-readiness.ts",
     "telegram:get-updates": "tsx scripts/telegram-get-updates.ts",
     "telegram:set-demo-chat": "tsx scripts/set-demo-master-telegram-chat.ts",
+    "telegram:set-webhook": "tsx scripts/telegram-set-webhook.ts",
+    "telegram:webhook-info": "tsx scripts/telegram-webhook-info.ts",
     "telegram:test-card": "tsx scripts/telegram-test-card.ts",
     "telegram:simulate-accept": "tsx scripts/telegram-simulate-callback.ts --action=accept",
-    "telegram:simulate-spam": "tsx scripts/telegram-simulate-callback.ts --action=spam"
+    "telegram:simulate-spam": "tsx scripts/telegram-simulate-callback.ts --action=spam",
+    "lead:status": "tsx scripts/lead-status.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

@@ -40,16 +40,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const repositories = createSupabaseRepositoryContext();
-  const masterInterface = createTelegramMasterInterface();
+  try {
+    const repositories = createSupabaseRepositoryContext();
+    const masterInterface = createTelegramMasterInterface();
 
-  await handleTelegramLeadCallback(repositories, masterInterface, {
-    callbackQueryId: callbackQuery.id,
-    action: callbackData.action,
-    leadId: callbackData.leadId,
-    chatId: toTelegramChatId(callbackQuery.message.chat.id),
-    messageId: String(callbackQuery.message.message_id),
-  });
+    await handleTelegramLeadCallback(repositories, masterInterface, {
+      callbackQueryId: callbackQuery.id,
+      action: callbackData.action,
+      leadId: callbackData.leadId,
+      chatId: toTelegramChatId(callbackQuery.message.chat.id),
+      messageId: String(callbackQuery.message.message_id),
+    });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown callback handling error";
+    console.error("Telegram webhook callback handling failed:", message);
+    return NextResponse.json({ ok: false }, { status: 500 });
+  }
 
   return NextResponse.json({ ok: true });
 }

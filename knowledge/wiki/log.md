@@ -2,6 +2,9 @@
 
 ## 2026-05-23
 
+- Added public Telegram webhook setup tooling: safe setWebhook and getWebhookInfo scripts, demo lead
+  status helper, route tests for webhook secret rejection and unsupported-update ignores, and docs for
+  Vercel-based real inline callback verification.
 - Created initial wiki structure for agent-maintained summaries.
 - Established that raw sources remain canonical in `knowledge/raw/`.
 - Read all markdown files in `knowledge/raw/` and added source-informed working summaries without editing raw files.

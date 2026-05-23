@@ -5,4 +5,5 @@ export * from "./telegram-date";
 export * from "./telegram-message-builder";
 export * from "./telegram-phone";
 export * from "./telegram-types";
+export * from "./telegram-webhook-url";
 export * from "./telegram-webhook-verifier";

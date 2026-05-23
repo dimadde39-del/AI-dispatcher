@@ -18,7 +18,8 @@ Client WhatsApp/SMS notifications are deferred. Telegram is for the master inter
 - Local demo sending is available through `POST /api/test/telegram-lead-card` and `npm run telegram:test-card`.
 - Bot `/start` onboarding is deferred. During early testing, `masters.telegram_chat_id` is set manually.
 - Live setup helpers are available through `npm run telegram:ready`, `npm run telegram:get-updates`,
-  `npm run telegram:set-demo-chat`, and local callback simulation scripts.
+  `npm run telegram:set-demo-chat`, `npm run telegram:set-webhook`, `npm run telegram:webhook-info`,
+  `npm run lead:status`, and local callback simulation scripts.
 
 ## Lead Card Principles
 
@@ -113,17 +114,51 @@ TELEGRAM_WEBHOOK_SECRET=
 
 Choose a random internal webhook secret and put it in `TELEGRAM_WEBHOOK_SECRET`.
 
-When the app has a public HTTPS URL, set the webhook:
+When the app has a public HTTPS URL, set the webhook with the helper:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -d "url=$APP_BASE_URL/api/webhooks/telegram" \
-  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+npm run telegram:set-webhook
+```
+
+The helper requires `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, and `APP_BASE_URL`. It builds
+`${APP_BASE_URL}/api/webhooks/telegram`, sends Telegram the secret token, and prints only safe
+result fields. It refuses localhost and non-HTTPS URLs because Telegram webhooks require a public
+HTTPS endpoint.
+
+Check Telegram's registered webhook state:
+
+```bash
+npm run telegram:webhook-info
 ```
 
 Telegram will send the secret in `X-Telegram-Bot-Api-Secret-Token`; the webhook route rejects mismatches when the secret is configured.
 
 For local webhook testing, expose the dev server with a trusted tunnel and set `APP_BASE_URL` to that HTTPS URL.
+
+## Vercel Callback Test Checklist
+
+Required Vercel environment variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_WEBHOOK_SECRET`
+- `APP_BASE_URL=https://your-vercel-app.vercel.app`
+
+Real inline callback test:
+
+1. Deploy the app to Vercel.
+2. Set `APP_BASE_URL` to the deployed public HTTPS URL.
+3. Run `npm run telegram:set-webhook`.
+4. Run `npm run telegram:webhook-info`.
+5. Run `npm run telegram:test-card`.
+6. Click the accept button in Telegram.
+7. Run `npm run lead:status`.
+8. Confirm the demo lead status is `ACCEPTED`.
+
+Do not expect real Telegram inline callbacks to reach `localhost`; use a deployed HTTPS URL or a
+trusted HTTPS tunnel.
 
 ## Manual Master Connection
 

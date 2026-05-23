@@ -24,7 +24,11 @@ import { sanitizeTelegramChatId } from "../src/infrastructure/telegram/telegram-
 import { formatTelegramDate } from "../src/infrastructure/telegram/telegram-date";
 import { buildTelegramLeadCardMessage } from "../src/infrastructure/telegram/telegram-message-builder";
 import { normalizeKazakhstanPhoneForDisplay } from "../src/infrastructure/telegram/telegram-phone";
+import { buildTelegramWebhookUrl } from "../src/infrastructure/telegram/telegram-webhook-url";
+import { verifyTelegramWebhookSecret } from "../src/infrastructure/telegram/telegram-webhook-verifier";
+import { POST as telegramWebhookPOST } from "../src/app/api/webhooks/telegram/route";
 import { buildDemoTimestampRefresh, findDemoLead } from "../scripts/telegram-demo-data";
+import type { NextRequest } from "next/server";
 
 const timestamp = "2026-05-23T00:00:00.000Z";
 const russianDemoSummary = "Клиент сообщил о протечке трубы возле Абая 150. Мастеру нужно перезвонить.";
@@ -234,6 +238,36 @@ function createMasterInterfaceMock(): {
   };
 }
 
+async function withTelegramWebhookSecret<T>(secret: string | undefined, callback: () => T | Promise<T>): Promise<T> {
+  const previousSecret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (secret === undefined) {
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
+  } else {
+    process.env.TELEGRAM_WEBHOOK_SECRET = secret;
+  }
+
+  try {
+    return await callback();
+  } finally {
+    if (previousSecret === undefined) {
+      delete process.env.TELEGRAM_WEBHOOK_SECRET;
+    } else {
+      process.env.TELEGRAM_WEBHOOK_SECRET = previousSecret;
+    }
+  }
+}
+
+function makeTelegramWebhookRequest(body: unknown, headers: Record<string, string> = {}): NextRequest {
+  return new Request("http://localhost/api/webhooks/telegram", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  }) as NextRequest;
+}
+
 test("buildTelegramLeadCardMessage formats a Russian lead card with buttons", () => {
   const lead = makeLead();
   const message = buildTelegramLeadCardMessage({
@@ -407,5 +441,67 @@ test("telegram test-card helpers refresh demo timestamps without creating a new 
     callCreatedAt: "2026-05-23T17:21:00.000Z",
     leadCreatedAt: "2026-05-23T17:21:00.000Z",
     leadUpdatedAt: "2026-05-23T17:21:00.000Z",
+  });
+});
+
+test("buildTelegramWebhookUrl rejects localhost and non-HTTPS URLs", () => {
+  assert.throws(() => buildTelegramWebhookUrl("http://localhost:3000"));
+  assert.throws(() => buildTelegramWebhookUrl("http://example.com"));
+  assert.throws(() => buildTelegramWebhookUrl("https://localhost:3000"));
+});
+
+test("buildTelegramWebhookUrl accepts public HTTPS URLs", () => {
+  assert.equal(
+    buildTelegramWebhookUrl("https://ai-dispatcher-demo.vercel.app"),
+    "https://ai-dispatcher-demo.vercel.app/api/webhooks/telegram",
+  );
+});
+
+test("verifyTelegramWebhookSecret accepts only the configured secret", async () => {
+  await withTelegramWebhookSecret("expected-secret", () => {
+    assert.equal(
+      verifyTelegramWebhookSecret(new Headers({ "x-telegram-bot-api-secret-token": "expected-secret" })),
+      true,
+    );
+    assert.equal(
+      verifyTelegramWebhookSecret(new Headers({ "x-telegram-bot-api-secret-token": "wrong-secret" })),
+      false,
+    );
+  });
+});
+
+test("telegram webhook route rejects invalid secret", async () => {
+  await withTelegramWebhookSecret("expected-secret", async () => {
+    const response = await telegramWebhookPOST(
+      makeTelegramWebhookRequest(
+        {
+          update_id: 1,
+        },
+        { "x-telegram-bot-api-secret-token": "wrong-secret" },
+      ),
+    );
+
+    assert.equal(response.status, 401);
+  });
+});
+
+test("telegram webhook route safely ignores unsupported updates", async () => {
+  await withTelegramWebhookSecret(undefined, async () => {
+    const response = await telegramWebhookPOST(
+      makeTelegramWebhookRequest({
+        update_id: 2,
+        message: {
+          message_id: 10,
+          text: "/start",
+          chat: {
+            id: 123,
+          },
+        },
+      }),
+    );
+    const body = (await response.json()) as { ok: boolean; ignored: boolean };
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(body, { ok: true, ignored: true });
   });
 });

@@ -65,7 +65,11 @@ The product sells saved orders, not an "AI bot".
 - Thin `POST /api/webhooks/telegram` route for callback updates.
 - Local-only `POST /api/test/telegram-lead-card` route and `npm run telegram:test-card`.
 - Telegram live setup helper scripts for readiness, safe `getUpdates`, demo master chat-id update,
-  and local callback simulation.
+  public webhook registration/info, demo lead status checks, and local callback simulation.
+- `npm run telegram:set-webhook` registers the Telegram webhook only for public HTTPS `APP_BASE_URL`
+  values and sends `TELEGRAM_WEBHOOK_SECRET` as Telegram's `secret_token` without printing secrets.
+- `npm run telegram:webhook-info` prints safe webhook diagnostics, and `npm run lead:status` prints
+  the demo lead status for real inline callback verification.
 - Demo master chat-id setup now sanitizes accidental surrounding angle brackets and rejects
   non-numeric Telegram chat ids.
 - Telegram lead cards no longer include a `tel:` URL button because Telegram rejected it during live
@@ -86,6 +90,8 @@ The product sells saved orders, not an "AI bot".
 - Latest live `npm run telegram:test-card` sent a polished Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
 - Latest live card used `call.startedAt` for the displayed call time, aligned with the current Almaty minute.
 - Local accept callback simulation is idempotent against the already accepted demo lead.
+- Real Telegram inline callbacks are ready to verify once `APP_BASE_URL` points at a deployed public
+  HTTPS app and `npm run telegram:set-webhook` has registered `/api/webhooks/telegram`.
 
 ## Verified Live Data
 
@@ -107,4 +113,5 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Use the live Telegram card with the pilot master, then start the Vapi webhook foundation when ready.
+Deploy the current app to a public HTTPS URL, register the Telegram webhook, verify a real inline
+accept callback with `npm run lead:status`, then start the Vapi webhook foundation when ready.

@@ -54,9 +54,12 @@ Security notes:
 - `npm run telegram:ready`
 - `npm run telegram:get-updates`
 - `npm run telegram:set-demo-chat -- --chat-id=<chat id>`
+- `npm run telegram:set-webhook`
+- `npm run telegram:webhook-info`
 - `npm run telegram:test-card`
 - `npm run telegram:simulate-accept`
 - `npm run telegram:simulate-spam`
+- `npm run lead:status`
 
 ## Database
 
@@ -97,9 +100,15 @@ APP_BASE_URL=https://your-public-dev-url.example
 Then set the webhook:
 
 ```bash
-curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
-  -d "url=$APP_BASE_URL/api/webhooks/telegram" \
-  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+npm run telegram:set-webhook
+```
+
+The set-webhook helper refuses localhost and non-HTTPS URLs, prints only the webhook URL plus safe
+Telegram result fields, and never prints the bot token or webhook secret. Inspect the registered
+Telegram webhook with:
+
+```bash
+npm run telegram:webhook-info
 ```
 
 Manual `telegram_chat_id` setup for early testing:
@@ -157,6 +166,19 @@ npm run telegram:simulate-spam
 
 The simulation scripts use a mocked Telegram interface and update Supabase through the same callback
 use case that the webhook route uses.
+
+Public webhook callback verification:
+
+1. Deploy to Vercel.
+2. Configure Vercel env vars: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+   `SUPABASE_SERVICE_ROLE_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, and
+   `APP_BASE_URL=https://your-vercel-app.vercel.app`.
+3. Run `npm run telegram:set-webhook`.
+4. Run `npm run telegram:webhook-info`.
+5. Run `npm run telegram:test-card`.
+6. Click the accept button in Telegram.
+7. Run `npm run lead:status`.
+8. Confirm the demo lead status is `ACCEPTED`.
 
 ## Expected Workflow
 
