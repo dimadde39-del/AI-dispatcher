@@ -1,24 +1,52 @@
 # Local Development
 
-Current phase: pre-foundation setup.
+Current phase: product foundation built.
 
-No application stack has been selected in this workspace yet. Do not add frameworks, package managers, or dependencies until the product foundation task starts or an existing project stack is discovered.
+The app now uses Next.js 15 App Router, TypeScript, Supabase Postgres, and Zod.
 
-## Expected Future Workflow
+## Environment
+
+Copy `.env.example` to `.env.local` and fill:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Optional future variables:
+
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_WEBHOOK_SECRET`
+- `VAPI_WEBHOOK_SECRET`
+- `OPENAI_API_KEY`
+
+Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
+
+## Commands
+
+- `npm install`
+- `npm run dev`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+- `npm run seed`
+
+## Database
+
+Apply the migration in `supabase/migrations/202605230001_initial_product_foundation.sql` to the Supabase project before running the seed script or admin UI against live data.
+
+## Expected Workflow
 
 1. Inspect existing project files before changing scripts.
-2. Install dependencies only when the chosen app stack requires them.
-3. Keep environment variables out of Git.
-4. Run available validation before commits.
-5. Update knowledge docs when meaningful product or architecture decisions change.
+2. Keep environment variables out of Git.
+3. Run available validation before commits.
+4. Update knowledge docs when meaningful product or architecture decisions change.
 
 ## Validation
 
-When a package exists, prefer:
+Run:
 
 - `npm run lint`
 - `npm run typecheck`
-- `npm run build` when available
+- `npm run test`
+- `npm run build`
 - Relevant tests when business logic changes
-
-Do not invent unavailable scripts.

@@ -2,9 +2,9 @@
 
 ## Phase
 
-Current phase: pre-foundation setup.
+Current phase: product foundation built.
 
-The project operating system, documentation structure, agent rules, and initial architecture decisions are being established before product code is built.
+The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton.
 
 Raw product docs are stored in `knowledge/raw/` and must be treated as canonical source material.
 
@@ -40,6 +40,17 @@ The product sells saved orders, not an "AI bot".
 - Telegram is the primary master interface for pilots.
 - Vapi integration must stay behind a voice-provider abstraction.
 - Provider raw payloads should be stored for debugging and audit.
+- Product code now follows the `src/domain`, `src/application`, `src/infrastructure`, `src/app/api`, and `src/app/admin` structure.
+
+## Implemented Foundation
+
+- Next.js 15 App Router project config and internal `/admin` surface.
+- Zod env validation in `src/lib/env.ts`.
+- Supabase migration for masters, assistant profiles, AI numbers, calls, call events, leads, lead events, Telegram messages, subscriptions, value reports, and audit logs.
+- Domain enums, entity schemas, lead transitions, and value report calculation.
+- Repository interfaces plus Supabase repository implementations.
+- Application use cases for master creation, AI number assignment, forwarding instructions, trial activation, lead creation, lead acceptance, spam marking, and value report creation.
+- Seed script and lightweight tests.
 
 ## Source Notes
 
@@ -51,9 +62,9 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Build product foundation:
+Build Telegram interface:
 
-- Database schema.
-- Domain types and status enums.
-- Repository interfaces and Supabase implementations.
-- Internal admin skeleton.
+- Lead card presenter.
+- Callback handling.
+- Status updates.
+- Delivery persistence through the existing Telegram message table.
