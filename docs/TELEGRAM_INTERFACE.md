@@ -160,6 +160,16 @@ Real inline callback test:
 Do not expect real Telegram inline callbacks to reach `localhost`; use a deployed HTTPS URL or a
 trusted HTTPS tunnel.
 
+Latest live verification on 2026-05-23 registered:
+
+```text
+https://ai-dispatcher-chi.vercel.app/api/webhooks/telegram
+```
+
+Telegram reported zero pending updates, no last error, and `allowed_updates` set to
+`callback_query`. A live test card callback changed the demo lead from `NEW` to `ACCEPTED`; the
+callback-handled event was written after the Telegram card edit and callback answer completed.
+
 ## Manual Master Connection
 
 Manual `telegram_chat_id` setup is acceptable for this phase:

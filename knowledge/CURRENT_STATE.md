@@ -90,8 +90,11 @@ The product sells saved orders, not an "AI bot".
 - Latest live `npm run telegram:test-card` sent a polished Telegram lead card successfully and persisted a `LEAD_CARD` row in `telegram_messages`.
 - Latest live card used `call.startedAt` for the displayed call time, aligned with the current Almaty minute.
 - Local accept callback simulation is idempotent against the already accepted demo lead.
-- Real Telegram inline callbacks are ready to verify once `APP_BASE_URL` points at a deployed public
-  HTTPS app and `npm run telegram:set-webhook` has registered `/api/webhooks/telegram`.
+- Public Telegram webhook registration is verified for
+  `https://ai-dispatcher-chi.vercel.app/api/webhooks/telegram`.
+- Real Telegram inline accept callback is verified: the demo lead was reset to `NEW`, a live card was
+  sent, the Telegram accept button changed Supabase status to `ACCEPTED`, and a
+  `TELEGRAM_LEAD_CALLBACK_HANDLED` event was written after the Telegram card edit/answer path.
 
 ## Verified Live Data
 
@@ -113,5 +116,4 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Deploy the current app to a public HTTPS URL, register the Telegram webhook, verify a real inline
-accept callback with `npm run lead:status`, then start the Vapi webhook foundation when ready.
+Start the Vapi webhook foundation when ready.

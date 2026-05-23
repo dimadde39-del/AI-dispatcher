@@ -2,6 +2,9 @@
 
 ## 2026-05-23
 
+- Verified the real Telegram callback webhook on the deployed Vercel URL: setWebhook succeeded,
+  webhook info showed zero pending updates and no last error, a live test card was accepted in
+  Telegram, Supabase status changed to `ACCEPTED`, and the callback-handled event was recorded.
 - Added public Telegram webhook setup tooling: safe setWebhook and getWebhookInfo scripts, demo lead
   status helper, route tests for webhook secret rejection and unsupported-update ignores, and docs for
   Vercel-based real inline callback verification.
