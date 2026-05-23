@@ -45,7 +45,11 @@ export default async function MasterDetailPage({
             <strong>Phone:</strong> {master.phone}
           </p>
           <p>
-            <strong>Telegram:</strong> {master.telegramChatId ?? "-"}
+            <strong>telegram_chat_id:</strong> {master.telegramChatId ?? "-"}
+          </p>
+          <p>
+            <strong>Telegram readiness:</strong>{" "}
+            <StatusBadge status={master.telegramChatId ? "CONFIGURED" : "MISSING"} />
           </p>
           <p>
             <strong>Status:</strong> <StatusBadge status={master.status} />
@@ -129,6 +133,18 @@ export default async function MasterDetailPage({
             <p className="muted">Assign an AI number to generate forwarding codes.</p>
           )}
         </div>
+      </section>
+
+      <section className="card" style={{ marginTop: 16 }}>
+        <h2>Telegram connection</h2>
+        <p>
+          Early testing uses manual chat id setup. Ask the master to message the bot, read the chat id
+          from a trusted diagnostic update, then save it in <code>masters.telegram_chat_id</code>.
+        </p>
+        <p className="muted">
+          Bot onboarding with /start is intentionally deferred; do not put raw provider payloads or
+          diagnostic data in Telegram messages.
+        </p>
       </section>
 
       <section className="card" style={{ marginTop: 16 }}>

@@ -20,6 +20,8 @@ Optional future variables:
 - `OPENAI_API_KEY`
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
+Telegram variables are optional for general development checks. `TELEGRAM_BOT_TOKEN` is required only
+for Telegram-specific operations such as sending a lead card or answering a callback.
 
 Setup steps:
 
@@ -49,6 +51,7 @@ Security notes:
 - `npm run build`
 - `npm run seed`
 - `npm run smoke:admin-data`
+- `npm run telegram:test-card`
 
 ## Database
 
@@ -69,6 +72,53 @@ npm run smoke:admin-data
 The seed script is designed to be safe to run multiple times. It should keep one demo master, two demo AI numbers, one demo call, one demo lead, and one demo subscription.
 
 The current local machine uses `SUPABASE_DB_URL` with Supabase's pooler connection string. The migration runner disables prepared statements for pooler compatibility.
+
+## Telegram Local Testing
+
+Create a bot with BotFather and put the token in `.env.local`:
+
+```bash
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET=
+```
+
+Use a random `TELEGRAM_WEBHOOK_SECRET` before setting a webhook. For local webhook testing, expose
+the Next.js dev server through a trusted HTTPS tunnel and set:
+
+```bash
+APP_BASE_URL=https://your-public-dev-url.example
+```
+
+Then set the webhook:
+
+```bash
+curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
+  -d "url=$APP_BASE_URL/api/webhooks/telegram" \
+  -d "secret_token=$TELEGRAM_WEBHOOK_SECRET"
+```
+
+Manual `telegram_chat_id` setup for early testing:
+
+1. Ask the master to send a message to the bot.
+2. Read the chat id from a trusted local diagnostic update.
+3. Update `masters.telegram_chat_id` in Supabase.
+4. Avoid saving raw Telegram updates in docs, commits, broad logs, or screenshots.
+
+Send the seeded demo lead card:
+
+```bash
+npm run seed
+npm run telegram:test-card
+```
+
+You can also call the local-only route while the dev server is running:
+
+```bash
+curl -X POST "http://localhost:3000/api/test/telegram-lead-card"
+```
+
+If `TELEGRAM_BOT_TOKEN` or `telegram_chat_id` is missing, live Telegram sending is expected to fail.
+Pure formatter, parser, and callback tests still run without Telegram credentials.
 
 ## Expected Workflow
 

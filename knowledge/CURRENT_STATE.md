@@ -2,9 +2,9 @@
 
 ## Phase
 
-Current phase: product foundation built.
+Current phase: Telegram interface foundation built.
 
-The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton.
+The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
 Raw product docs are stored in `knowledge/raw/` and must be treated as canonical source material.
 
@@ -54,6 +54,19 @@ The product sells saved orders, not an "AI bot".
 - Application use cases for master creation, AI number assignment, forwarding instructions, trial activation, lead creation, lead acceptance, spam marking, and value report creation.
 - Seed script and lightweight tests.
 
+## Implemented Telegram Interface
+
+- Telegram Bot API client for `sendMessage`, `editMessageText`, and `answerCallbackQuery`.
+- Pure Russian lead-card presenter with accept/spam callback buttons and optional `tel:` call button.
+- Compact callback data parser for `lead:accept:{leadId}` and `lead:spam:{leadId}`.
+- Webhook secret verifier for `X-Telegram-Bot-Api-Secret-Token`.
+- Application use case to send a lead card, persist a `telegram_messages` row, and write lead/audit events.
+- Application use case to handle Telegram lead callbacks by reusing existing accept/spam status use cases.
+- Thin `POST /api/webhooks/telegram` route for callback updates.
+- Local-only `POST /api/test/telegram-lead-card` route and `npm run telegram:test-card`.
+- Admin leads page can send/resend cards, shows Telegram send state, and disables sending when token/chat id is missing.
+- Admin master detail page shows `telegram_chat_id` and Telegram readiness.
+
 ## Verified Live Data
 
 - Required Supabase tables exist.
@@ -74,9 +87,4 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Build Telegram interface:
-
-- Lead card presenter.
-- Callback handling.
-- Status updates.
-- Delivery persistence through the existing Telegram message table.
+Set up a real Telegram bot and pilot master chat id, test live lead-card sending, then start the Vapi webhook foundation when ready.

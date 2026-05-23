@@ -5,4 +5,6 @@ export * from "./createLead";
 export * from "./createMaster";
 export * from "./createValueReport";
 export * from "./generateForwardingInstructions";
+export * from "./handleTelegramLeadCallback";
 export * from "./markLeadAsSpam";
+export * from "./sendLeadCardToMaster";

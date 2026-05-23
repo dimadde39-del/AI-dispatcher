@@ -45,6 +45,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .admin-shell {
   display: grid;
   grid-template-columns: 240px 1fr;

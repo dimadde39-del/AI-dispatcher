@@ -13,7 +13,8 @@
     "db:migrate": "tsx scripts/db-migrate.ts",
     "db:verify": "tsx scripts/db-verify.ts",
     "smoke:admin-data": "tsx scripts/smoke-admin-data.ts",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "telegram:test-card": "tsx scripts/telegram-test-card.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
