@@ -51,7 +51,12 @@ Security notes:
 - `npm run build`
 - `npm run seed`
 - `npm run smoke:admin-data`
+- `npm run telegram:ready`
+- `npm run telegram:get-updates`
+- `npm run telegram:set-demo-chat -- --chat-id=<chat id>`
 - `npm run telegram:test-card`
+- `npm run telegram:simulate-accept`
+- `npm run telegram:simulate-spam`
 
 ## Database
 
@@ -100,9 +105,22 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \
 Manual `telegram_chat_id` setup for early testing:
 
 1. Ask the master to send a message to the bot.
-2. Read the chat id from a trusted local diagnostic update.
-3. Update `masters.telegram_chat_id` in Supabase.
+2. Run `npm run telegram:get-updates`.
+3. Copy the target chat id from the safe summary.
+4. Update `masters.telegram_chat_id` in Supabase.
 4. Avoid saving raw Telegram updates in docs, commits, broad logs, or screenshots.
+
+Helper command:
+
+```bash
+npm run telegram:set-demo-chat -- --chat-id=<chat id>
+```
+
+Alternative using an env value:
+
+```bash
+TELEGRAM_TEST_CHAT_ID=<chat id> npm run telegram:set-demo-chat
+```
 
 Send the seeded demo lead card:
 
@@ -119,6 +137,16 @@ curl -X POST "http://localhost:3000/api/test/telegram-lead-card"
 
 If `TELEGRAM_BOT_TOKEN` or `telegram_chat_id` is missing, live Telegram sending is expected to fail.
 Pure formatter, parser, and callback tests still run without Telegram credentials.
+
+Simulate Telegram callback handling before a public webhook exists:
+
+```bash
+npm run telegram:simulate-accept
+npm run telegram:simulate-spam
+```
+
+The simulation scripts use a mocked Telegram interface and update Supabase through the same callback
+use case that the webhook route uses.
 
 ## Expected Workflow
 

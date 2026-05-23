@@ -64,8 +64,18 @@ The product sells saved orders, not an "AI bot".
 - Application use case to handle Telegram lead callbacks by reusing existing accept/spam status use cases.
 - Thin `POST /api/webhooks/telegram` route for callback updates.
 - Local-only `POST /api/test/telegram-lead-card` route and `npm run telegram:test-card`.
+- Telegram live setup helper scripts for readiness, safe `getUpdates`, demo master chat-id update,
+  and local callback simulation.
 - Admin leads page can send/resend cards, shows Telegram send state, and disables sending when token/chat id is missing.
 - Admin master detail page shows `telegram_chat_id` and Telegram readiness.
+
+## Live Telegram Setup Status
+
+- General env validation passes.
+- Telegram-specific readiness sees `TELEGRAM_BOT_TOKEN` and `TELEGRAM_WEBHOOK_SECRET` as present without printing values.
+- `telegram:get-updates` currently returned no message updates, so a real pilot chat id has not yet been retrieved through the bot.
+- Local callback simulation passed for the demo lead and changed its status from `NEW` to `ACCEPTED` through the existing Telegram callback use case with a mocked Telegram client.
+- Live Telegram lead-card sending remains blocked until the target Telegram account sends `/start` to the bot or `TELEGRAM_TEST_CHAT_ID` is provided.
 
 ## Verified Live Data
 
@@ -87,4 +97,4 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Set up a real Telegram bot and pilot master chat id, test live lead-card sending, then start the Vapi webhook foundation when ready.
+Send `/start` to the Telegram bot from the pilot account, run `npm run telegram:get-updates`, set the demo master chat id, send the test card, then start the Vapi webhook foundation when ready.

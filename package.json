@@ -14,7 +14,12 @@
     "db:verify": "tsx scripts/db-verify.ts",
     "smoke:admin-data": "tsx scripts/smoke-admin-data.ts",
     "seed": "tsx scripts/seed.ts",
-    "telegram:test-card": "tsx scripts/telegram-test-card.ts"
+    "telegram:ready": "tsx scripts/telegram-readiness.ts",
+    "telegram:get-updates": "tsx scripts/telegram-get-updates.ts",
+    "telegram:set-demo-chat": "tsx scripts/set-demo-master-telegram-chat.ts",
+    "telegram:test-card": "tsx scripts/telegram-test-card.ts",
+    "telegram:simulate-accept": "tsx scripts/telegram-simulate-callback.ts --action=accept",
+    "telegram:simulate-spam": "tsx scripts/telegram-simulate-callback.ts --action=spam"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

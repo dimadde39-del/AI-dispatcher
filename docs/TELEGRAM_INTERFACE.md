@@ -17,6 +17,8 @@ Client WhatsApp/SMS notifications are deferred. Telegram is for the master inter
 - The webhook entry point is `POST /api/webhooks/telegram`.
 - Local demo sending is available through `POST /api/test/telegram-lead-card` and `npm run telegram:test-card`.
 - Bot `/start` onboarding is deferred. During early testing, `masters.telegram_chat_id` is set manually.
+- Live setup helpers are available through `npm run telegram:ready`, `npm run telegram:get-updates`,
+  `npm run telegram:set-demo-chat`, and local callback simulation scripts.
 
 ## Lead Card Principles
 
@@ -133,6 +135,24 @@ where phone = '<master phone>';
 
 The admin master detail page shows whether Telegram is configured or missing.
 
+Helper flow:
+
+```bash
+npm run telegram:ready
+npm run telegram:get-updates
+npm run telegram:set-demo-chat -- --chat-id=<chat id>
+```
+
+`telegram:get-updates` uses `TELEGRAM_BOT_TOKEN` without printing it. It prints only a safe summary:
+chat id, chat type, username, first name, and message text when available. If no updates are found,
+send `/start` to the bot from the target Telegram account and run the command again.
+
+`telegram:set-demo-chat` can also read the chat id from:
+
+```bash
+TELEGRAM_TEST_CHAT_ID=<chat id> npm run telegram:set-demo-chat
+```
+
 ## Demo Lead Card Test
 
 Prerequisites:
@@ -147,6 +167,13 @@ Terminal test:
 npm run telegram:test-card
 ```
 
+If needed, `telegram:test-card` can use `TELEGRAM_TEST_CHAT_ID` to update the demo master before
+sending:
+
+```bash
+TELEGRAM_TEST_CHAT_ID=<chat id> npm run telegram:test-card
+```
+
 Local API test:
 
 ```bash
@@ -154,6 +181,20 @@ curl -X POST "$APP_BASE_URL/api/test/telegram-lead-card"
 ```
 
 The test API route is disabled in production. Responses must not include secrets.
+
+## Local Callback Simulation
+
+A public webhook is not required for local callback verification. Use:
+
+```bash
+npm run telegram:simulate-accept
+npm run telegram:simulate-spam
+```
+
+These scripts call the existing Telegram callback use case with a mocked Telegram interface, so no
+Telegram edit request is sent. They verify that Supabase lead status reaches `ACCEPTED` or `SPAM`.
+Run them on a lead that can legally transition to the target status; for example, accept/spam from
+`NEW` or `CALLBACK_PENDING`.
 
 ## Weekly Value Reports
 

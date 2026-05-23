@@ -17,6 +17,20 @@ async function main() {
     throw new Error("No demo lead found. Run npm run seed first.");
   }
 
+  const testChatId = process.env.TELEGRAM_TEST_CHAT_ID?.trim();
+  if (testChatId) {
+    await repositories.masters.update(demoLead.masterId, {
+      telegramChatId: testChatId,
+    });
+  }
+
+  const master = await repositories.masters.getById(demoLead.masterId);
+  if (!master?.telegramChatId || master.telegramChatId === "demo-chat") {
+    throw new Error(
+      "Demo master does not have a real telegram_chat_id. Run npm run telegram:get-updates after sending /start, then npm run telegram:set-demo-chat -- --chat-id=<chat id>.",
+    );
+  }
+
   const telegramMessage = await sendLeadCardToMaster(
     repositories,
     createTelegramMasterInterface(),
@@ -33,6 +47,7 @@ async function main() {
         masterId: demoLead.masterId,
         telegramMessageId: telegramMessage.id,
         providerMessageId: telegramMessage.messageId,
+        usedTelegramTestChatId: Boolean(testChatId),
       },
       null,
       2,

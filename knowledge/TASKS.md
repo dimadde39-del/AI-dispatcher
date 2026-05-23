@@ -11,7 +11,7 @@
 
 ## Current Task
 
-Build the Vapi webhook foundation after live Telegram pilot testing is ready.
+Complete live Telegram pilot setup after the target Telegram account sends `/start` to the bot.
 
 ## Done
 
@@ -34,6 +34,8 @@ Build the Vapi webhook foundation after live Telegram pilot testing is ready.
 - Thin Telegram webhook route and local-only demo send route.
 - Admin lead send/resend action and Telegram readiness display on master detail.
 - Telegram formatter/parser/callback tests.
+- Telegram readiness, safe getUpdates, demo chat-id update, and local callback simulation scripts.
+- Local Telegram accept callback simulation verified against Supabase.
 
 ## Not Started Yet
 
@@ -43,3 +45,4 @@ Build the Vapi webhook foundation after live Telegram pilot testing is ready.
 - Lead extraction from transcripts.
 - Production pilot operations tooling.
 - Telegram `/start` onboarding.
+- Live Telegram card send to a real pilot chat, pending a retrieved chat id from `/start` or `TELEGRAM_TEST_CHAT_ID`.
