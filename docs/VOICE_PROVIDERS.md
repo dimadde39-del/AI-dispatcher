@@ -113,6 +113,25 @@ leads when a master can be resolved, and sends Telegram lead cards only when Tel
 
 Detailed spike notes are in `docs/SELF_HOST_VOICE_SPIKE.md`.
 
+The browser upload STT milestone is available at:
+
+```text
+/dev/selfhost-stt
+```
+
+It posts to the Python voice-agent:
+
+```text
+POST /stt/transcribe
+POST /stt/transcribe-and-emit
+```
+
+The mock provider is the default and costs nothing. The optional Deepgram provider uses the
+pre-recorded Listen API and experimental `language=multi&model=nova-3` settings for RU/KZ testing.
+Do not treat Deepgram quality as proven until recorded RU, KZ, and mixed speech are compared against
+Vapi. `npm run vapi:recent` only inspects Vapi calls; self-host verification should use admin
+calls/leads, Telegram, and Supabase rows where `provider = self-host`.
+
 ## Webhook Secret
 
 Current implementation uses one canonical secret header:

@@ -5,6 +5,7 @@ import {
   parseSelfHostVoiceEventPayload,
   verifySelfHostVoiceWebhookSecret,
 } from "../src/infrastructure/voice/self-host";
+import { publicEnvSchema, serverEnvSchema } from "../src/lib/env";
 
 async function withEnv<T>(updates: Record<string, string | undefined>, callback: () => T | Promise<T>): Promise<T> {
   const previous = new Map<string, string | undefined>();
@@ -134,4 +135,20 @@ test("Self-host webhook verifier allows missing secret outside production only",
   await withEnv({ SELF_HOST_VOICE_WEBHOOK_SECRET: undefined, NODE_ENV: "production" }, () => {
     assert.equal(verifySelfHostVoiceWebhookSecret(new Headers()), false);
   });
+});
+
+test("Self-host STT env parsing defaults the voice-agent URL and validates production gate", () => {
+  const publicEnv = publicEnvSchema.parse({
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+  });
+  assert.equal(publicEnv.NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL, "http://localhost:8001");
+
+  const serverEnv = serverEnvSchema.parse({
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon-key",
+    SUPABASE_SERVICE_ROLE_KEY: "service-role",
+    ENABLE_DEV_SELFHOST_STT: "true",
+  });
+  assert.equal(serverEnv.ENABLE_DEV_SELFHOST_STT, "true");
 });

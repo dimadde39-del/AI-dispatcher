@@ -45,3 +45,41 @@ class SelfHostVoiceEvent:
             payload[field_map.get(key, key)] = value
 
         return payload
+
+
+def build_stt_emit_events(
+    provider_call_id: str,
+    transcript: str,
+    summary: str,
+    ai_number: str = "web-dev",
+    customer_phone: str | None = None,
+) -> list[SelfHostVoiceEvent]:
+    started_at = utc_now_iso()
+    ended_at = utc_now_iso()
+    return [
+        SelfHostVoiceEvent(
+            type="call_started",
+            provider_call_id=provider_call_id,
+            customer_phone=customer_phone,
+            ai_number=ai_number,
+            started_at=started_at,
+        ),
+        SelfHostVoiceEvent(
+            type="transcript_updated",
+            provider_call_id=provider_call_id,
+            transcript=transcript,
+            timestamp=ended_at,
+        ),
+        SelfHostVoiceEvent(
+            type="call_ended",
+            provider_call_id=provider_call_id,
+            customer_phone=customer_phone,
+            ai_number=ai_number,
+            started_at=started_at,
+            ended_at=ended_at,
+            duration_seconds=None,
+            transcript=transcript,
+            summary=summary,
+            recording_url=None,
+        ),
+    ]

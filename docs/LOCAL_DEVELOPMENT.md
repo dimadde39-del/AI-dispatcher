@@ -21,7 +21,9 @@ Optional future variables:
 - `VAPI_ASSISTANT_ID`
 - `SELF_HOST_VOICE_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_VAPI_PUBLIC_KEY`
+- `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL`
 - `ENABLE_DEV_VAPI_WEB_CALL`
+- `ENABLE_DEV_SELFHOST_STT`
 - `OPENAI_API_KEY`
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
@@ -33,6 +35,9 @@ simulate Vapi fixture payloads without live Vapi credentials.
 self-host dry-runs can run without it outside production.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
+`NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` is safe for browser use and defaults to
+`http://localhost:8001`. `ENABLE_DEV_SELFHOST_STT=true` enables the self-host STT dev page in
+production when deliberately needed.
 
 Setup steps:
 
@@ -82,6 +87,9 @@ Security notes:
 - `npm run selfhost:simulate-kz`
 - `npm run selfhost:simulate-mix`
 - `npm run selfhost:simulate-gas`
+- `npm run voice-agent:dev`
+- `npm run selfhost:stt-health`
+- `npm run selfhost:stt-mock`
 - `npm run lead:status`
 
 ## Database
@@ -309,10 +317,75 @@ cd services/voice-agent
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
 The Python service is not production-ready and has no SIP/PSTN integration yet.
+
+## Self-Host STT Browser Test
+
+Milestone 2 is upload-based STT, not a realtime agent. It does not add an LLM response loop, TTS,
+SIP/PSTN, Twilio, Zadarma, billing, or production deployment.
+
+Install the Python service dependencies once:
+
+```bash
+cd services/voice-agent
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+Run the service from the repo root:
+
+```bash
+npm run voice-agent:dev
+```
+
+In another terminal, run:
+
+```bash
+npm run selfhost:stt-health
+```
+
+Open:
+
+```text
+http://localhost:3000/dev/selfhost-stt
+```
+
+The page can record a short browser microphone clip and upload it to the voice-agent, or emit a typed
+mock transcript. The Python service then sends `call_started`, `transcript_updated`, and `call_ended`
+events to `/api/webhooks/self-host-voice`.
+
+Zero-cost mock path:
+
+```bash
+npm run selfhost:stt-mock
+```
+
+This command calls `/stt/transcribe-and-emit`, so it requires the Python voice-agent and the Next.js
+backend to be running. It may create a `self-host` call/lead and send a Telegram card if the backend
+can resolve a master and Telegram is configured.
+
+Optional Deepgram path:
+
+```bash
+STT_PROVIDER=deepgram
+DEEPGRAM_API_KEY=
+STT_LANGUAGE_MODE=ru-kk
+```
+
+The current Deepgram experiment uses `language=multi&model=nova-3` for uploaded audio. Deepgram docs
+show that setting for multilingual code-switching and list Russian support, but Kazakh support is not
+clearly listed for Nova-3. Treat it as an empirical RU/KZ quality test.
+
+For self-host verification, `npm run vapi:recent` is not relevant. Check:
+
+- `/admin/calls`
+- `/admin/leads`
+- Telegram card delivery
+- Supabase `calls.provider = self-host`
 
 ## Vapi Web Call Dev Page
 

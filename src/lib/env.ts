@@ -11,6 +11,7 @@ export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: requiredEnvValue,
   NEXT_PUBLIC_VAPI_PUBLIC_KEY: optionalSecretSchema,
+  NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL: z.string().url().default("http://localhost:8001"),
 });
 
 export const serverEnvSchema = publicEnvSchema.extend({
@@ -34,6 +35,10 @@ export const serverEnvSchema = publicEnvSchema.extend({
     (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
     z.enum(["true", "false"]).optional(),
   ),
+  ENABLE_DEV_SELFHOST_STT: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.enum(["true", "false"]).optional(),
+  ),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -44,6 +49,7 @@ export function getPublicEnv(): PublicEnv {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_VAPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY,
+    NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL: process.env.NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL,
   });
 }
 
@@ -69,5 +75,6 @@ export function getServerEnv(): ServerEnv {
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     APP_BASE_URL: process.env.APP_BASE_URL,
     ENABLE_DEV_VAPI_WEB_CALL: process.env.ENABLE_DEV_VAPI_WEB_CALL,
+    ENABLE_DEV_SELFHOST_STT: process.env.ENABLE_DEV_SELFHOST_STT,
   });
 }

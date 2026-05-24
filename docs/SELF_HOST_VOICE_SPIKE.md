@@ -53,7 +53,7 @@ x-self-host-voice-secret: <secret>
 ## Spike Milestones
 
 1. Mock transcript to `VoiceEvent` to Telegram.
-2. Browser microphone to transcript.
+2. Browser microphone to transcript. Done as upload-based STT spike.
 3. STT language routing for RU/KZ.
 4. LLM response loop.
 5. TTS response loop.
@@ -87,3 +87,69 @@ npm run selfhost:simulate-gas -- --dry-run
 Without `--dry-run`, the script processes events through the existing `handleVoiceEvent` use case.
 It creates or updates calls, creates a lead on `CALL_ENDED` when a master can be resolved, and sends a
 Telegram card only when Telegram is configured.
+
+## Upload-Based STT Milestone
+
+Milestone 2 uses a simple browser recording upload flow, not realtime streaming:
+
+```text
+/dev/selfhost-stt
+-> services/voice-agent POST /stt/transcribe-and-emit
+-> Deepgram or mock STT
+-> self-host VoiceEvents
+-> /api/webhooks/self-host-voice
+-> Supabase and Telegram
+```
+
+Run the Python voice-agent:
+
+```bash
+npm run voice-agent:dev
+```
+
+Check health:
+
+```bash
+npm run selfhost:stt-health
+```
+
+Emit a zero-cost mock transcript through the Python service:
+
+```bash
+npm run selfhost:stt-mock
+```
+
+Open the dev page:
+
+```text
+http://localhost:3000/dev/selfhost-stt
+```
+
+The page supports:
+
+- Browser microphone recording upload.
+- Typed mock transcript emission.
+- RU, KZ, mixed RU/KZ, and gas test phrases.
+- Safe event/result logs.
+
+Deepgram is optional. Set this only when intentionally testing external STT:
+
+```bash
+STT_PROVIDER=deepgram
+DEEPGRAM_API_KEY=...
+```
+
+The Deepgram experiment uses the pre-recorded Listen API with `language=multi&model=nova-3`, based
+on Deepgram's current multilingual code-switching docs:
+https://developers.deepgram.com/docs/multilingual-code-switching
+
+Important caveat: Deepgram's current model/language overview clearly lists Russian for Nova-3, but
+Kazakh is not clearly listed there. RU/KZ mixed quality must be measured with real recordings before
+any migration decision.
+
+`npm run vapi:recent` is not relevant for self-host calls. Verify self-host output through:
+
+- `/admin/calls`
+- `/admin/leads`
+- Telegram card delivery
+- Supabase `calls.provider = self-host`

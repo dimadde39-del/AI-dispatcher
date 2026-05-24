@@ -2,6 +2,10 @@
 
 ## 2026-05-24
 
+- Built self-host voice spike milestone 2 as an upload-based STT path: Python voice-agent
+  `/stt/transcribe` and `/stt/transcribe-and-emit`, mock provider, optional Deepgram provider,
+  browser dev page `/dev/selfhost-stt`, STT health/mock scripts, and tests for mock STT plus event
+  payload sequencing. This remains non-realtime and does not add LLM, TTS, or telephony.
 - Started the self-host voice provider spike after Vapi live Web Call reliability issues with
   DeepSeek provider faults and RU/KZ language misdetection. Added ADR 0006, a self-host provider
   parser/verifier/webhook route, dry-run simulation scripts for RU/KZ/mixed/gas scenarios, docs, and

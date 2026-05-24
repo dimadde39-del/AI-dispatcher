@@ -2,7 +2,7 @@
 
 ## Phase
 
-Current phase: self-host voice provider spike foundation after the first live Vapi Web Call exposed
+Current phase: self-host voice upload-based STT spike after the first live Vapi Web Call exposed
 RU/KZ runtime reliability issues.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
@@ -132,6 +132,21 @@ The product sells saved orders, not an "AI bot".
   backend webhook client, and a FastAPI health route.
 - The Python service does not create leads, talk to Telegram, query Supabase, or implement telephony.
 
+## Implemented Self-Host STT Upload Milestone
+
+- Python voice-agent exposes `GET /health`, `POST /stt/transcribe`, and
+  `POST /stt/transcribe-and-emit`.
+- Mock STT provider is the default and returns typed text as transcript without external APIs.
+- Optional Deepgram provider sends uploaded audio to Deepgram's pre-recorded Listen API with
+  experimental `language=multi&model=nova-3` settings for RU/KZ testing.
+- Voice-agent emits `call_started`, `transcript_updated`, and `call_ended` payloads to the existing
+  Next.js self-host webhook.
+- Dev page `/dev/selfhost-stt` records short browser microphone clips for upload and has a typed
+  mock transcript fallback with RU, KZ, mixed RU/KZ, and gas phrases.
+- Scripts exist for `voice-agent:dev`, `selfhost:stt-health`, and `selfhost:stt-mock`.
+- This milestone does not implement realtime streaming, LLM responses, TTS, SIP/PSTN, Twilio,
+  Zadarma, billing, or production deployment.
+
 ## Vapi Live Test Preparation
 
 - Public Vapi Server URL for the pilot app is
@@ -178,6 +193,6 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Run the self-host mock transcript path against Supabase and Telegram once intentionally, then build
-the browser microphone to transcript milestone. Keep Vapi available as the fallback while the
-self-host spike proves RU/KZ quality.
+Run the browser upload STT and mock transcript paths against Supabase and Telegram intentionally,
+compare RU/KZ transcript quality, then decide the first STT language-routing experiment. Keep Vapi
+available as the fallback while the self-host spike proves RU/KZ quality.

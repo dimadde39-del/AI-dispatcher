@@ -1,8 +1,12 @@
 import json
-from urllib import request
+from urllib import error, request
 
 from .config import Settings
 from .events import SelfHostVoiceEvent
+
+
+class BackendClientError(RuntimeError):
+    pass
 
 
 class BackendClient:
@@ -23,11 +27,17 @@ class BackendClient:
             headers["x-self-host-voice-secret"] = self._settings.self_host_voice_webhook_secret
 
         http_request = request.Request(self.webhook_url, data=body, headers=headers, method="POST")
-        with request.urlopen(http_request, timeout=10) as response:
-            response_body = response.read().decode("utf-8")
+        try:
+            with request.urlopen(http_request, timeout=10) as response:
+                response_body = response.read().decode("utf-8")
+        except error.HTTPError as exc:
+            safe_body = exc.read().decode("utf-8", errors="replace")[:300]
+            raise BackendClientError(f"Backend webhook failed with HTTP {exc.code}: {safe_body}") from exc
+        except error.URLError as exc:
+            raise BackendClientError(f"Backend webhook request failed: {exc.reason}") from exc
 
         parsed = json.loads(response_body)
         if not isinstance(parsed, dict):
-            raise ValueError("Backend returned a non-object response.")
+            raise BackendClientError("Backend returned a non-object response.")
 
         return parsed

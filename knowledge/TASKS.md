@@ -5,7 +5,7 @@
 1. Product foundation: DB schema, domain types, repositories, admin skeleton. Done.
 2. Telegram interface: lead card, callbacks, status updates. Done.
 3. Vapi webhook: call started/ended, transcript, recording. Done.
-4. Self-host voice spike: mock/browser voice path with RU/KZ language-routing control. Current.
+4. Self-host voice spike: mock/browser STT path with RU/KZ language-routing control. Current.
 5. Configure Vapi assistant/phone number and run a real end-of-call report test as fallback path.
 6. Lead extraction: strict JSON, Zod validation, fallback.
 7. Reports: weekly value reminders.
@@ -13,7 +13,7 @@
 
 ## Current Task
 
-Build the self-host voice provider spike foundation without removing the existing Vapi integration.
+Build the self-host upload-based STT spike without removing the existing Vapi integration.
 
 ## Done
 
@@ -59,6 +59,9 @@ Build the self-host voice provider spike foundation without removing the existin
 - Self-host simulation scripts for RU, KZ, mixed RU/KZ, and gas scenarios.
 - Python `services/voice-agent` skeleton with config, event mapping, backend webhook client, and
   FastAPI health route.
+- Upload-based STT milestone: voice-agent `/stt/transcribe` and `/stt/transcribe-and-emit`, mock STT
+  provider, optional Deepgram provider, `/dev/selfhost-stt` browser recorder/mock page, and STT
+  health/mock scripts.
 
 ## Not Started Yet
 
@@ -68,7 +71,6 @@ Build the self-host voice provider spike foundation without removing the existin
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
-- Browser microphone to transcript in the self-host voice service.
 - RU/KZ STT language routing spike.
 - Self-host LLM and TTS response loop.
 - Self-host SIP/PSTN integration.

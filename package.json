@@ -34,6 +34,9 @@
     "selfhost:simulate-kz": "tsx scripts/self-host-voice-simulate.ts --scenario=kz",
     "selfhost:simulate-mix": "tsx scripts/self-host-voice-simulate.ts --scenario=mix",
     "selfhost:simulate-gas": "tsx scripts/self-host-voice-simulate.ts --scenario=gas",
+    "voice-agent:dev": "cd services/voice-agent && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001",
+    "selfhost:stt-health": "tsx scripts/self-host-stt-health.ts",
+    "selfhost:stt-mock": "tsx scripts/self-host-stt-mock.ts",
     "lead:status": "tsx scripts/lead-status.ts"
   },
   "dependencies": {
