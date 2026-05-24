@@ -1,6 +1,8 @@
 # Voice Providers
 
-Vapi is the first planned voice-provider path. Pipecat/self-host voice is a later optimization. Both must stay behind a `VoiceProvider` abstraction.
+Vapi is the first hosted voice-provider path. Self-host voice is now an explicit spike because the
+first live Vapi Web Call exposed RU/KZ reliability issues. Both providers must stay behind a
+`VoiceProvider` abstraction.
 
 ## VoiceProvider Principle
 
@@ -8,7 +10,8 @@ Application code should not depend directly on Vapi SDKs, webhook payload shapes
 
 Vapi first means the initial integration should prioritize reliability, webhooks, transcripts, recordings, and speed to pilot. It does not mean Vapi concepts are allowed into domain or application code.
 
-Pipecat/self-host later means future margin optimization and deeper voice control. It remains deferred until the product proves demand.
+Self-host voice means future margin optimization and deeper voice control. It is a spike only until
+RU/KZ STT quality, latency, and end-of-call lead quality beat the hosted path.
 
 ## Adapter Responsibilities
 
@@ -64,6 +67,52 @@ Vapi payloads are parsed defensively from `payload.message` when present, and fr
 when Vapi sends the message directly. Unknown event types are preserved and should not crash the
 webhook.
 
+## Self-Host Voice Spike
+
+The self-host spike keeps the Next.js backend, Supabase, admin UI, and Telegram pipeline as the
+source of truth. A separate Python skeleton lives in:
+
+```text
+services/voice-agent
+```
+
+It should emit internal events to:
+
+```text
+POST /api/webhooks/self-host-voice
+```
+
+Self-host internal event types are normalized into the same application events:
+
+- `call_started` -> `CALL_STARTED`
+- `transcript_updated` -> `TRANSCRIPT_UPDATED`
+- `call_ended` -> `CALL_ENDED`
+- unrecognized events -> `UNKNOWN`
+
+Webhook verification uses:
+
+```text
+x-self-host-voice-secret: <SELF_HOST_VOICE_WEBHOOK_SECRET>
+```
+
+`SELF_HOST_VOICE_WEBHOOK_SECRET` is optional for local dry-runs. If configured, the route rejects
+missing or mismatched headers. Production should configure it before any deployed self-host test.
+
+Local simulation:
+
+```bash
+npm run selfhost:simulate -- --dry-run
+npm run selfhost:simulate-ru -- --dry-run
+npm run selfhost:simulate-kz -- --dry-run
+npm run selfhost:simulate-mix -- --dry-run
+npm run selfhost:simulate-gas -- --dry-run
+```
+
+Without `--dry-run`, the simulator processes events through `handleVoiceEvent`, creates calls and
+leads when a master can be resolved, and sends Telegram lead cards only when Telegram is configured.
+
+Detailed spike notes are in `docs/SELF_HOST_VOICE_SPIKE.md`.
+
 ## Webhook Secret
 
 Current implementation uses one canonical secret header:
@@ -107,7 +156,8 @@ the deterministic fallback.
 
 ## Deferred
 
-Self-host Pipecat voice stack is deferred. Do not add it until explicitly started by a future task, and even then keep it behind the same `VoiceProvider` port.
+Self-host production telephony remains deferred. Do not add SIP/PSTN, Twilio, Zadarma, production
+deployment, or billing until the self-host spike passes the migration gates.
 
 ## Telephony Notes
 

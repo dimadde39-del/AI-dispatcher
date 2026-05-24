@@ -2,7 +2,8 @@
 
 ## Phase
 
-Current phase: preparing the first real Vapi end-of-call-report test.
+Current phase: self-host voice provider spike foundation after the first live Vapi Web Call exposed
+RU/KZ runtime reliability issues.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -21,6 +22,7 @@ The product sells saved orders, not an "AI bot".
 - Supabase database.
 - Telegram master interface.
 - Vapi webhook integration foundation.
+- Self-host voice provider spike foundation.
 
 ## Deferred Surfaces
 
@@ -28,7 +30,7 @@ The product sells saved orders, not an "AI bot".
 - Customer-facing marketplace.
 - Customer-facing landing.
 - Billing provider integration.
-- Self-host Pipecat voice stack.
+- Production self-host voice telephony/SIP.
 - Squad mode.
 - WhatsApp/SMS client notifications.
 - Public auth/customer accounts.
@@ -116,6 +118,20 @@ The product sells saved orders, not an "AI bot".
 - Local fixture simulation is available through `npm run vapi:simulate`; readiness checks are
   available through `npm run vapi:ready`.
 
+## Implemented Self-Host Voice Spike Foundation
+
+- ADR 0006 records the decision to start a self-host voice spike while keeping Vapi as a fallback.
+- Provider-neutral `VoiceProviderName` now includes `self-host` alongside `vapi`.
+- Self-host infrastructure adapter parses internal `call_started`, `transcript_updated`,
+  `call_ended`, and unknown event payloads into normalized `VoiceEvent` values.
+- Thin `POST /api/webhooks/self-host-voice` route verifies `x-self-host-voice-secret` when
+  `SELF_HOST_VOICE_WEBHOOK_SECRET` is configured, parses the event, and calls `handleVoiceEvent`.
+- Self-host simulation scripts can dry-run or process RU, KZ, mixed RU/KZ, and gas scenarios without
+  Vapi or paid voice APIs.
+- Python service skeleton exists under `services/voice-agent` with config, event payload mapping,
+  backend webhook client, and a FastAPI health route.
+- The Python service does not create leads, talk to Telegram, query Supabase, or implement telephony.
+
 ## Vapi Live Test Preparation
 
 - Public Vapi Server URL for the pilot app is
@@ -162,6 +178,6 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Configure the Vapi assistant and phone number, set the deployed Server URL to
-`https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi`, configure webhook authentication, and run
-a real end-of-call report test.
+Run the self-host mock transcript path against Supabase and Telegram once intentionally, then build
+the browser microphone to transcript milestone. Keep Vapi available as the fallback while the
+self-host spike proves RU/KZ quality.

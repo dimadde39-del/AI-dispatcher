@@ -2,6 +2,10 @@
 
 ## 2026-05-24
 
+- Started the self-host voice provider spike after Vapi live Web Call reliability issues with
+  DeepSeek provider faults and RU/KZ language misdetection. Added ADR 0006, a self-host provider
+  parser/verifier/webhook route, dry-run simulation scripts for RU/KZ/mixed/gas scenarios, docs, and
+  a minimal Python `services/voice-agent` skeleton that emits events to the Next.js backend.
 - Added a dev-only `/dev/vapi-web-call` page using `@vapi-ai/web` for real browser microphone tests
   against the current Vapi assistant, protected in production by `ENABLE_DEV_VAPI_WEB_CALL`.
 - Added Vapi assistant behavior test scripts: a local Russian-first RU/KZ dispatcher policy checklist

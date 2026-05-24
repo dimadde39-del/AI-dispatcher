@@ -16,6 +16,7 @@ const result = serverEnvSchema.safeParse({
   VAPI_API_KEY: process.env.VAPI_API_KEY,
   VAPI_WEBHOOK_SECRET: process.env.VAPI_WEBHOOK_SECRET,
   VAPI_ASSISTANT_ID: process.env.VAPI_ASSISTANT_ID,
+  SELF_HOST_VOICE_WEBHOOK_SECRET: process.env.SELF_HOST_VOICE_WEBHOOK_SECRET,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
   APP_BASE_URL: process.env.APP_BASE_URL,

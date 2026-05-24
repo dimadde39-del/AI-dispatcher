@@ -29,6 +29,11 @@
     "vapi:recent": "tsx scripts/vapi-recent-calls.ts",
     "vapi:chat-tests": "tsx scripts/vapi-chat-tests.ts",
     "vapi:simulate": "tsx scripts/vapi-simulate-event.ts",
+    "selfhost:simulate": "tsx scripts/self-host-voice-simulate.ts",
+    "selfhost:simulate-ru": "tsx scripts/self-host-voice-simulate.ts --scenario=ru",
+    "selfhost:simulate-kz": "tsx scripts/self-host-voice-simulate.ts --scenario=kz",
+    "selfhost:simulate-mix": "tsx scripts/self-host-voice-simulate.ts --scenario=mix",
+    "selfhost:simulate-gas": "tsx scripts/self-host-voice-simulate.ts --scenario=gas",
     "lead:status": "tsx scripts/lead-status.ts"
   },
   "dependencies": {

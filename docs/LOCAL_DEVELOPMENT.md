@@ -19,6 +19,7 @@ Optional future variables:
 - `VAPI_API_KEY`
 - `VAPI_WEBHOOK_SECRET`
 - `VAPI_ASSISTANT_ID`
+- `SELF_HOST_VOICE_WEBHOOK_SECRET`
 - `NEXT_PUBLIC_VAPI_PUBLIC_KEY`
 - `ENABLE_DEV_VAPI_WEB_CALL`
 - `OPENAI_API_KEY`
@@ -28,6 +29,8 @@ Telegram variables are optional for general development checks. `TELEGRAM_BOT_TO
 for Telegram-specific operations such as sending a lead card or answering a callback.
 `VAPI_WEBHOOK_SECRET` is required for production Vapi webhooks. Local development can parse and
 simulate Vapi fixture payloads without live Vapi credentials.
+`SELF_HOST_VOICE_WEBHOOK_SECRET` protects `/api/webhooks/self-host-voice` when configured. Local
+self-host dry-runs can run without it outside production.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 
@@ -74,6 +77,11 @@ Security notes:
 - `npm run vapi:recent`
 - `npm run vapi:chat-tests`
 - `npm run vapi:simulate`
+- `npm run selfhost:simulate`
+- `npm run selfhost:simulate-ru`
+- `npm run selfhost:simulate-kz`
+- `npm run selfhost:simulate-mix`
+- `npm run selfhost:simulate-gas`
 - `npm run lead:status`
 
 ## Database
@@ -258,6 +266,54 @@ address heuristics, urgency/safety keyword rules, and raw payload persistence fo
 
 Detailed live setup steps and troubleshooting are in `docs/VAPI_LIVE_SETUP.md`.
 
+## Self-Host Voice Spike Local Testing
+
+The self-host voice spike keeps realtime voice work outside the Next.js app, under:
+
+```text
+services/voice-agent
+```
+
+The internal webhook path is:
+
+```text
+/api/webhooks/self-host-voice
+```
+
+Webhook verification uses `x-self-host-voice-secret` when `SELF_HOST_VOICE_WEBHOOK_SECRET` is set.
+Do not print or paste the secret into docs or logs.
+
+Dry-run the mock event loop without writing to Supabase:
+
+```bash
+npm run selfhost:simulate -- --dry-run
+```
+
+Scenario helpers:
+
+```bash
+npm run selfhost:simulate-ru -- --dry-run
+npm run selfhost:simulate-kz -- --dry-run
+npm run selfhost:simulate-mix -- --dry-run
+npm run selfhost:simulate-gas -- --dry-run
+```
+
+Without `--dry-run`, the simulator processes `CALL_STARTED`, `TRANSCRIPT_UPDATED`, and `CALL_ENDED`
+through the existing application use case. It may create a call and lead in Supabase, and it sends a
+Telegram card only when `TELEGRAM_BOT_TOKEN` and the master's `telegram_chat_id` are configured.
+
+Python skeleton:
+
+```bash
+cd services/voice-agent
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+The Python service is not production-ready and has no SIP/PSTN integration yet.
+
 ## Vapi Web Call Dev Page
 
 The browser Web SDK test page is available at:
@@ -335,6 +391,7 @@ Run:
 - `npm run vapi:ready`
 - `npm run vapi:live-ready`
 - `npm run dispatcher:policy-tests`
+- `npm run selfhost:simulate -- --dry-run`
 - `npm run vapi:live-checklist`
 - `npm run db:verify`
 - `npm run smoke:admin-data`

@@ -1,6 +1,6 @@
 import type { JsonValue } from "@/domain";
 
-export type VoiceProviderName = "vapi";
+export type VoiceProviderName = "vapi" | "self-host";
 export type VoiceEventType = "CALL_STARTED" | "CALL_ENDED" | "TRANSCRIPT_UPDATED" | "UNKNOWN";
 
 interface VoiceEventBase {

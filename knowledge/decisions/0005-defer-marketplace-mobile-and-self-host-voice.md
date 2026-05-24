@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Partially superseded by ADR 0006 for the self-host voice spike only; production self-host
+telephony remains deferred.
 
 ## Context
 

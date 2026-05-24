@@ -17,6 +17,7 @@ Use this structure once product code begins:
 - React components must not query Supabase directly.
 - Domain and application code must not import provider SDKs.
 - Infrastructure adapts provider-specific payloads to application-level commands and events.
+- Vapi and self-host voice adapters must both normalize into provider-neutral `VoiceEvent` values.
 - Raw provider payloads must be saved for debugging before normalization.
 - External inputs must be validated with explicit TypeScript types and Zod schemas when the stack supports them.
 
@@ -53,8 +54,9 @@ Use this structure once product code begins:
 
 ## Source-Informed Notes
 
-- Vapi is the first voice-provider path for speed and reliability.
-- Pipecat/self-host voice is a later cost and margin optimization, not current architecture.
+- Vapi remains the hosted fallback voice-provider path.
+- Self-host voice is an active spike for RU/KZ STT and runtime-control validation, not a production
+  telephony migration yet.
 - Kazakhstan local SIP/telephony constraints matter; avoid assuming Twilio-style foreign numbers will work for forwarding.
 - Raw sources mention SQLite in an earlier architecture note; this operating system chooses Supabase Postgres as the foundation and records that as an ADR.
 
@@ -66,3 +68,15 @@ Use this structure once product code begins:
 4. Application use case creates or updates `Call`, `Lead`, and `LeadEvent`.
 5. Telegram adapter sends a lead card through a master-interface port.
 6. Callback webhook updates lead status through an idempotent use case.
+
+## Self-Host Voice Spike Flow
+
+1. Browser/test audio or future Pipecat runtime runs in `services/voice-agent`.
+2. The voice service performs realtime voice orchestration only.
+3. The voice service emits internal self-host events to `/api/webhooks/self-host-voice`.
+4. The Next.js route verifies the optional shared secret and calls the self-host provider parser.
+5. Application use cases handle normalized `VoiceEvent` values and remain the source of truth for
+   calls, leads, Supabase writes, and Telegram cards.
+
+Production SIP/PSTN, Twilio, Zadarma, and billing remain deferred until the spike passes quality
+gates.

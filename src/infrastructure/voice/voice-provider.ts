@@ -1,6 +1,6 @@
-import type { VoiceEvent } from "@/interfaces/voice-event";
+import type { VoiceEvent, VoiceProviderName } from "@/interfaces/voice-event";
 
 export interface VoiceProvider {
-  readonly name: "vapi";
+  readonly name: VoiceProviderName;
   parseWebhookPayload(payload: unknown): VoiceEvent;
 }

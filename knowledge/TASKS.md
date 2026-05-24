@@ -5,14 +5,15 @@
 1. Product foundation: DB schema, domain types, repositories, admin skeleton. Done.
 2. Telegram interface: lead card, callbacks, status updates. Done.
 3. Vapi webhook: call started/ended, transcript, recording. Done.
-4. Configure Vapi assistant/phone number and run a real end-of-call report test. Next.
-5. Lead extraction: strict JSON, Zod validation, fallback.
-6. Reports: weekly value reminders.
-7. Pilot operations tooling.
+4. Self-host voice spike: mock/browser voice path with RU/KZ language-routing control. Current.
+5. Configure Vapi assistant/phone number and run a real end-of-call report test as fallback path.
+6. Lead extraction: strict JSON, Zod validation, fallback.
+7. Reports: weekly value reminders.
+8. Pilot operations tooling.
 
 ## Current Task
 
-Prepare the project for the first real Vapi end-of-call-report test.
+Build the self-host voice provider spike foundation without removing the existing Vapi integration.
 
 ## Done
 
@@ -52,6 +53,12 @@ Prepare the project for the first real Vapi end-of-call-report test.
 - Vapi assistant behavior test preparation: local Russian-first RU/KZ policy checklist script and
   optional Vapi Chat runner that skips cleanly when billing/payment or API key is unavailable.
 - Dev-only Vapi Web Call page for browser microphone testing without provisioning a phone number.
+- ADR 0006: start a self-host voice spike while keeping Vapi as fallback.
+- Self-host voice provider parser, provider adapter, webhook verifier, and thin
+  `/api/webhooks/self-host-voice` route.
+- Self-host simulation scripts for RU, KZ, mixed RU/KZ, and gas scenarios.
+- Python `services/voice-agent` skeleton with config, event mapping, backend webhook client, and
+  FastAPI health route.
 
 ## Not Started Yet
 
@@ -61,3 +68,7 @@ Prepare the project for the first real Vapi end-of-call-report test.
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
+- Browser microphone to transcript in the self-host voice service.
+- RU/KZ STT language routing spike.
+- Self-host LLM and TTS response loop.
+- Self-host SIP/PSTN integration.
