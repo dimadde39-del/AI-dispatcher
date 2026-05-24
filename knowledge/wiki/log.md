@@ -2,6 +2,8 @@
 
 ## 2026-05-24
 
+- Added a dev-only `/dev/vapi-web-call` page using `@vapi-ai/web` for real browser microphone tests
+  against the current Vapi assistant, protected in production by `ENABLE_DEV_VAPI_WEB_CALL`.
 - Added Vapi assistant behavior test scripts: a local Russian-first RU/KZ dispatcher policy checklist
   that does not call Vapi, plus an optional Vapi Chat runner that skips cleanly without API key or
   when Vapi returns the billing/payment `402` gate.

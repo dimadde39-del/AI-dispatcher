@@ -135,6 +135,12 @@ The product sells saved orders, not an "AI bot".
   may return `402` until billing/payment method is configured. It is not part of required validation.
 - Policy and Chat tests do not replace real phone/Web SDK end-to-end validation because they do not
   validate audio, STT, telephony, webhook delivery, or Vapi end-of-call-report behavior.
+- `/dev/vapi-web-call` is a dev-only browser Web SDK page for assistant
+  `cc79d655-ed1f-47fb-ab03-a55558e8f48a`. It uses `NEXT_PUBLIC_VAPI_PUBLIC_KEY`, never exposes Vapi
+  server secrets, and is disabled in production unless `ENABLE_DEV_VAPI_WEB_CALL=true`.
+- The Web Call page can test real microphone/audio, RU/KZ/mixed STT, Vapi server messages,
+  end-of-call-report handling, backend call/lead creation, and Telegram delivery. It may still
+  require Vapi billing/payment.
 
 ## Verified Live Data
 

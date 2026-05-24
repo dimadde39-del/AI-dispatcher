@@ -41,6 +41,11 @@ vapi:chat-tests` uses the Vapi Chat API and requires `VAPI_API_KEY`; current Vap
 return `402` until billing/payment method is configured. Chat tests are not webhook, audio, STT, or
 telephony validation.
 
+For browser audio/STT validation without a phone number, use `/dev/vapi-web-call` with
+`NEXT_PUBLIC_VAPI_PUBLIC_KEY`. The page uses `@vapi-ai/web`, calls
+`vapi.start("cc79d655-ed1f-47fb-ab03-a55558e8f48a")`, and is disabled in production unless
+`ENABLE_DEV_VAPI_WEB_CALL=true`. Web Calls may still require Vapi billing/payment.
+
 The webhook route is intentionally thin: it reads JSON, verifies the configured secret, asks the Vapi
 provider adapter to parse the payload, and hands a normalized `VoiceEvent` to the application use
 case.

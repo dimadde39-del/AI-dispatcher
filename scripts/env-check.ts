@@ -6,6 +6,7 @@ loadEnvFiles();
 const result = serverEnvSchema.safeParse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_VAPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_DB_URL: process.env.SUPABASE_DB_URL,
   SUPABASE_PROJECT_REF: process.env.SUPABASE_PROJECT_REF,
@@ -18,6 +19,7 @@ const result = serverEnvSchema.safeParse({
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
   APP_BASE_URL: process.env.APP_BASE_URL,
+  ENABLE_DEV_VAPI_WEB_CALL: process.env.ENABLE_DEV_VAPI_WEB_CALL,
 });
 
 if (!result.success) {

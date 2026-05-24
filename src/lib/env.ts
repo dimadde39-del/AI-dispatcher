@@ -10,6 +10,7 @@ const requiredEnvValue = z.string().min(1);
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: requiredEnvValue,
+  NEXT_PUBLIC_VAPI_PUBLIC_KEY: optionalSecretSchema,
 });
 
 export const serverEnvSchema = publicEnvSchema.extend({
@@ -28,6 +29,10 @@ export const serverEnvSchema = publicEnvSchema.extend({
   OPENAI_API_KEY: optionalSecretSchema,
   DEEPSEEK_API_KEY: optionalSecretSchema,
   APP_BASE_URL: z.string().url().default("http://localhost:3000"),
+  ENABLE_DEV_VAPI_WEB_CALL: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.enum(["true", "false"]).optional(),
+  ),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -37,6 +42,7 @@ export function getPublicEnv(): PublicEnv {
   return publicEnvSchema.parse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    NEXT_PUBLIC_VAPI_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY,
   });
 }
 
@@ -60,5 +66,6 @@ export function getServerEnv(): ServerEnv {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     APP_BASE_URL: process.env.APP_BASE_URL,
+    ENABLE_DEV_VAPI_WEB_CALL: process.env.ENABLE_DEV_VAPI_WEB_CALL,
   });
 }

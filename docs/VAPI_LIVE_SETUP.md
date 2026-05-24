@@ -124,6 +124,48 @@ Vapi Chat requires billing/payment method.
 Do not include `vapi:chat-tests` in required build validation until billing/payment is intentionally
 configured.
 
+## Browser Web Call Test
+
+Use `/dev/vapi-web-call` to start a real Vapi Web Call from the browser without provisioning a phone
+number. This tests microphone/audio, Deepgram STT, assistant behavior, Vapi server messages, the
+end-of-call-report, backend call/lead creation, and Telegram card delivery.
+
+Environment:
+
+- `NEXT_PUBLIC_VAPI_PUBLIC_KEY`: Vapi Public Key from the Vapi dashboard. This is safe for browser
+  use.
+- `ENABLE_DEV_VAPI_WEB_CALL=true`: only needed when enabling the page in production.
+
+Do not use `VAPI_API_KEY` or `VAPI_WEBHOOK_SECRET` in browser code.
+
+To get the Vapi Public Key, open the Vapi dashboard and copy the Public Key from the API Keys,
+Developer, or account settings area. Put it in `.env.local` for local testing and in Vercel only if
+you intentionally need the deployed dev page.
+
+Production protection:
+
+- In local development, `/dev/vapi-web-call` is available when `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is set.
+- In production, the page shows `Dev Vapi Web Call page is disabled in production.` unless
+  `ENABLE_DEV_VAPI_WEB_CALL=true`.
+
+The Web Call may still require Vapi billing/payment even without a phone number.
+
+Test phrases:
+
+- RU urgent plumbing: `Срочно течет труба под ванной, адрес Абая 150, Айгуль.`
+- KZ water leak: `Үйде су ағып жатыр, өте шұғыл, район Бостандық, Нұрлан.`
+- Mixed RU/KZ: `Ванна жақта су кетіп жатыр, Қабанбай батыр, Мадина.`
+- Gas emergency: `Пахнет газом на кухне, адрес Жандосова 45.`
+- Price question: `Сколько будет стоить поменять замок?`
+- Repair advice: `Что мне самому открутить, чтобы холодильник морозил?`
+
+Verify after the call:
+
+- `npm run vapi:recent`
+- `/admin/calls`
+- `/admin/leads`
+- Telegram lead card delivery
+
 ## One Test Call
 
 1. In Vercel, confirm the environment variables above are set.

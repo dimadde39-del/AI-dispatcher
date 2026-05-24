@@ -37,6 +37,8 @@ const appBaseUrl = normalizeBaseUrl(process.env.APP_BASE_URL);
 const appUrl = parseUrl(appBaseUrl);
 const derivedWebhookUrl = appUrl ? new URL(VAPI_WEBHOOK_PATH, appUrl).toString() : null;
 const webhookSecretPresent = isPresent(process.env.VAPI_WEBHOOK_SECRET);
+const publicWebKeyPresent = isPresent(process.env.NEXT_PUBLIC_VAPI_PUBLIC_KEY);
+const devWebCallEnabled = process.env.ENABLE_DEV_VAPI_WEB_CALL === "true";
 
 console.log("Vapi live readiness:");
 console.log(`- Public app URL: ${PUBLIC_APP_URL}`);
@@ -48,6 +50,8 @@ console.log(`- Derived webhook URL: ${derivedWebhookUrl ?? "unavailable"}`);
 console.log(`- Webhook secret header: ${VAPI_WEBHOOK_SECRET_HEADER}`);
 console.log(`- VAPI_WEBHOOK_SECRET present: ${webhookSecretPresent ? "yes" : "no"}`);
 console.log(`- Webhook verification configured: ${isVapiWebhookVerificationConfigured() ? "yes" : "no"}`);
+console.log(`- NEXT_PUBLIC_VAPI_PUBLIC_KEY present: ${publicWebKeyPresent ? "yes" : "no"}`);
+console.log(`- Dev Web Call production override enabled: ${devWebCallEnabled ? "yes" : "no"}`);
 console.log(`- Optional scripts call Vapi API directly: ${OPTIONAL_SCRIPTS_CALL_VAPI_API ? "yes" : "no"}`);
 
 if (OPTIONAL_SCRIPTS_CALL_VAPI_API) {
@@ -76,6 +80,10 @@ if (!webhookSecretPresent) {
 
 if (!isPresent(process.env.VAPI_API_KEY)) {
   console.warn("- Warning: VAPI_API_KEY is missing. This only blocks optional npm run vapi:chat-tests.");
+}
+
+if (!publicWebKeyPresent) {
+  console.warn("- Warning: NEXT_PUBLIC_VAPI_PUBLIC_KEY is missing. This only blocks /dev/vapi-web-call.");
 }
 
 console.warn(

@@ -19,6 +19,8 @@ Optional future variables:
 - `VAPI_API_KEY`
 - `VAPI_WEBHOOK_SECRET`
 - `VAPI_ASSISTANT_ID`
+- `NEXT_PUBLIC_VAPI_PUBLIC_KEY`
+- `ENABLE_DEV_VAPI_WEB_CALL`
 - `OPENAI_API_KEY`
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
@@ -26,6 +28,8 @@ Telegram variables are optional for general development checks. `TELEGRAM_BOT_TO
 for Telegram-specific operations such as sending a lead card or answering a callback.
 `VAPI_WEBHOOK_SECRET` is required for production Vapi webhooks. Local development can parse and
 simulate Vapi fixture payloads without live Vapi credentials.
+`NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
+page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 
 Setup steps:
 
@@ -253,6 +257,38 @@ Current extraction is deterministic, not LLM-based. It uses Vapi summary/transcr
 address heuristics, urgency/safety keyword rules, and raw payload persistence for debugging.
 
 Detailed live setup steps and troubleshooting are in `docs/VAPI_LIVE_SETUP.md`.
+
+## Vapi Web Call Dev Page
+
+The browser Web SDK test page is available at:
+
+```text
+/dev/vapi-web-call
+```
+
+Install dependencies with `npm install`; the app uses `@vapi-ai/web` for this page.
+
+Add the Vapi Public Key to `.env.local`:
+
+```bash
+NEXT_PUBLIC_VAPI_PUBLIC_KEY=
+```
+
+The Public Key is safe for browser use. Do not put `VAPI_API_KEY` or `VAPI_WEBHOOK_SECRET` in client
+code.
+
+In production, the route is disabled unless:
+
+```bash
+ENABLE_DEV_VAPI_WEB_CALL=true
+```
+
+The page starts assistant `cc79d655-ed1f-47fb-ab03-a55558e8f48a` with `vapi.start(...)` and stops
+with `vapi.stop()`. A Web Call may still require Vapi billing/payment even without a phone number.
+
+Use it to test RU/KZ/mixed speech, emergency handling, price refusal, and repair-advice refusal.
+After a call, verify `npm run vapi:recent`, `/admin/calls`, `/admin/leads`, and Telegram card
+delivery.
 
 ## Dispatcher Behavior Testing
 
