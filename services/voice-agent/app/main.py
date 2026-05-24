@@ -8,6 +8,7 @@ from starlette.datastructures import UploadFile
 from .backend_client import BackendClient, BackendClientError
 from .config import load_settings
 from .events import build_stt_emit_events
+from .health import allowed_origins, build_health_response
 from .stt import SttError, SttResult, transcribe_with_provider
 from .stt_modes import list_stt_mode_configs
 from .stt_scenarios import get_stt_scenario, list_stt_scenarios
@@ -17,13 +18,7 @@ app = FastAPI(title="AI Dispatcher Self-Host Voice Agent Spike")
 
 
 def _allowed_origins() -> list[str]:
-    settings = load_settings()
-    origins = {
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        settings.backend_base_url,
-    }
-    return sorted(origin for origin in origins if origin)
+    return allowed_origins(load_settings())
 
 
 app.add_middleware(
@@ -31,24 +26,13 @@ app.add_middleware(
     allow_origins=_allowed_origins(),
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["content-type"],
+    allow_headers=["accept", "content-type"],
 )
 
 
 @app.get("/health")
 def health() -> dict[str, object]:
-    settings = load_settings()
-    return {
-        "ok": True,
-        "service": "voice-agent",
-        "backendBaseUrlConfigured": bool(settings.backend_base_url),
-        "webhookSecretConfigured": bool(settings.self_host_voice_webhook_secret),
-        "sttProvider": settings.stt_provider,
-        "sttMode": settings.stt_mode or settings.stt_provider,
-        "sttLanguageMode": settings.stt_language_mode,
-        "deepgramConfigured": bool(settings.deepgram_api_key),
-        "productionReady": False,
-    }
+    return build_health_response(load_settings())
 
 
 @app.get("/stt/modes")

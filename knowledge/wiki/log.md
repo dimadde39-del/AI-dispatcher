@@ -2,6 +2,11 @@
 
 ## 2026-05-24
 
+- Hardened the self-host STT dev harness: voice-agent health now returns safe provider/mode/backend
+  diagnostics, `/dev/selfhost-stt` shows online/offline status and exact local fix commands,
+  classifies network/CORS/non-2xx failures, treats missing MediaRecorder as a warning, supports
+  uploaded audio files, and keeps local mock scoring usable without the voice-agent. Added separate
+  mock score, mock emit, and file-test scripts plus tests.
 - Built the self-host STT language-routing experiment framework: named mock/Deepgram modes, shared
   RU/KZ/MIX/gas/electric/noisy scenarios, heuristic keyword/language scoring, `/stt/experiment`,
   `/stt/modes`, `/stt/scenarios`, dev UI selectors and score display, helper scripts, docs, and

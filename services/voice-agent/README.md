@@ -87,6 +87,21 @@ Health check:
 GET /health
 ```
 
+Safe health response shape:
+
+```json
+{
+  "ok": true,
+  "service": "voice-agent",
+  "sttProvider": "mock",
+  "sttMode": "mock",
+  "backendBaseUrl": "http://localhost:3000"
+}
+```
+
+The response must not include API keys, webhook secrets, raw provider payloads, transcripts, or
+recordings.
+
 STT endpoints:
 
 ```text

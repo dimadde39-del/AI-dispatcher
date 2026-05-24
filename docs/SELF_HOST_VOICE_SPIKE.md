@@ -113,11 +113,20 @@ Check health:
 npm run selfhost:stt-health
 ```
 
-Emit a zero-cost mock transcript through the Python service:
+Score a zero-cost mock transcript through the Python service before trying live STT:
 
 ```bash
 npm run selfhost:stt-mock
 ```
+
+Then test the full mock emit path into the Next.js self-host webhook:
+
+```bash
+npm run selfhost:stt-mock-emit
+```
+
+`selfhost:stt-mock-emit` may create a call/lead and may send a Telegram card when Telegram is
+configured and the backend resolves a master. It prints safe IDs and status fields only.
 
 Open the dev page:
 
@@ -127,12 +136,20 @@ http://localhost:3000/dev/selfhost-stt
 
 The page supports:
 
-- Browser microphone recording upload.
-- Typed mock transcript emission.
+- Voice-agent health diagnostics with the exact URL and fix command when offline.
+- Browser microphone recording upload when MediaRecorder is available.
+- File upload fallback for `.webm`, `.wav`, and `.mp3` samples.
+- Local typed mock transcript scoring even when the voice-agent is offline.
+- Typed mock transcript emission through the Python service when the voice-agent is online.
 - Scenario selection for RU, KZ, mixed RU/KZ, gas, electric danger, and noisy fallback phrases.
 - STT mode selection for mock plus Deepgram baselines.
 - `/stt/experiment` scoring with keyword hits, missed keywords, language signals, and warnings.
 - Safe event/result logs.
+
+Use Chrome or Edge on `localhost` for browser recording. Some embedded browsers and remote contexts
+do not expose `MediaRecorder`; in that case use the file upload or local mock transcript path. A
+Vercel-hosted dev page cannot call `http://localhost:8001` on your laptop unless the voice-agent is
+publicly reachable and configured in `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL`.
 
 Deepgram is optional. Set this only when intentionally testing external STT:
 

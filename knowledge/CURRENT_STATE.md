@@ -157,8 +157,14 @@ The product sells saved orders, not an "AI bot".
   KZ water leak, mixed RU/KZ water leak, gas emergency, electric danger, and noisy fallback phrases.
 - `POST /stt/experiment` transcribes one sample, scores keyword hits/misses, detects Cyrillic/Kazakh
   signals, flags likely wrong-language transcripts, and returns warnings.
-- `/dev/selfhost-stt` now has scenario and mode selectors, scored recording uploads, score details,
-  and the original mock transcript emit path for checking the backend/Telegram pipeline.
+- `/dev/selfhost-stt` now has scenario and mode selectors, voice-agent health diagnostics, local
+  mock scoring, file upload fallback, scored recording uploads when MediaRecorder is available,
+  score details, and the mock transcript emit path for checking the backend/Telegram pipeline.
+- `npm run selfhost:stt-mock` scores a known mock transcript through `/stt/experiment`;
+  `npm run selfhost:stt-mock-emit` sends a known mock transcript through
+  `/stt/transcribe-and-emit`; `npm run selfhost:stt-file` tests prerecorded synthetic audio files.
+- `GET /health` returns safe service/provider/mode/backend URL diagnostics and does not expose
+  secrets.
 - `docs/STT_EXPERIMENTS.md` defines recording steps, mode comparison, pass/fail rules, and the next
   gate to choose STT before adding self-host LLM/TTS.
 
@@ -208,6 +214,7 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Record the six synthetic STT scenarios across the Deepgram modes, compare scores and transcripts,
-then choose one STT mode before starting any self-host LLM/TTS response loop. Keep Vapi available as
-the fallback while the self-host spike proves RU/KZ quality.
+Run local mock emit first, then test prerecorded synthetic RU/KZ audio files or Chrome/Edge
+MediaRecorder recordings across the Deepgram modes. Choose one STT mode before starting any
+self-host LLM/TTS response loop. Keep Vapi available as the fallback while the self-host spike proves
+RU/KZ quality; real phone number testing comes after the local STT pipeline works.

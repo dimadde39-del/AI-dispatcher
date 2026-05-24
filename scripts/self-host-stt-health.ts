@@ -1,18 +1,25 @@
 import { loadEnvFiles } from "./load-env";
+import { fetchJsonWithDiagnostics } from "../src/app/dev/selfhost-stt/fetchDiagnostics";
+import { voiceAgentUrl } from "./self-host-stt-common";
 
 loadEnvFiles();
 
-function voiceAgentUrl(): string {
-  return (process.env.NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL?.trim() || "http://localhost:8001").replace(/\/+$/u, "");
-}
-
 async function main() {
   const url = `${voiceAgentUrl()}/health`;
-  const response = await fetch(url, { method: "GET" });
-  const body = (await response.json()) as unknown;
+  const result = await fetchJsonWithDiagnostics(url, {
+    method: "GET",
+    headers: { accept: "application/json" },
+  });
 
-  if (!response.ok) {
-    throw new Error(`Voice agent health failed with HTTP ${response.status}.`);
+  if (!result.ok) {
+    console.error(JSON.stringify(result, null, 2));
+    throw new Error(`Voice agent health failed: ${result.kind}. ${result.fix ?? ""}`.trim());
+  }
+
+  const body = result.body as Record<string, unknown>;
+  if (body.ok !== true || body.service !== "voice-agent" || !body.sttMode || !body.backendBaseUrl) {
+    console.error(JSON.stringify({ url, result: body }, null, 2));
+    throw new Error("Voice agent health returned an unexpected or stale shape. Restart with: npm run voice-agent:dev");
   }
 
   console.log(

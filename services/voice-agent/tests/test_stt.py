@@ -1,6 +1,8 @@
 import unittest
 
 from app.events import SelfHostVoiceEvent, build_stt_emit_events
+from app.config import Settings
+from app.health import allowed_origins, build_health_response
 from app.stt import MockSttProvider, SttError
 from app.stt_modes import STT_MODE_CONFIGS
 from app.stt_scenarios import STT_SCENARIOS
@@ -70,6 +72,34 @@ class SttModeConfigTests(unittest.TestCase):
         self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].provider, "deepgram")
         self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].model, "nova-3")
         self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].language, "multi")
+
+
+class VoiceAgentHealthTests(unittest.TestCase):
+    def test_health_response_has_safe_shape(self) -> None:
+        settings = Settings(
+            backend_base_url="http://localhost:3000",
+            self_host_voice_webhook_secret="secret-not-returned",
+            deepgram_api_key="deepgram-not-returned",
+            stt_provider="mock",
+            stt_mode="deepgram-multi-nova3",
+        )
+
+        response = build_health_response(settings)
+
+        self.assertEqual(response["ok"], True)
+        self.assertEqual(response["service"], "voice-agent")
+        self.assertEqual(response["sttProvider"], "mock")
+        self.assertEqual(response["sttMode"], "deepgram-multi-nova3")
+        self.assertEqual(response["backendBaseUrl"], "http://localhost:3000")
+        self.assertNotIn("self_host_voice_webhook_secret", response)
+        self.assertNotIn("deepgram_api_key", response)
+        self.assertNotIn("webhookSecretConfigured", response)
+
+    def test_cors_origins_include_next_dev_hosts(self) -> None:
+        origins = allowed_origins(Settings(backend_base_url="http://localhost:3000"))
+
+        self.assertIn("http://localhost:3000", origins)
+        self.assertIn("http://127.0.0.1:3000", origins)
 
 
 class SelfHostVoiceEventPayloadTests(unittest.TestCase):

@@ -13,8 +13,9 @@
 
 ## Current Task
 
-Run the self-host STT language-routing experiment by comparing RU/KZ/MIX recordings across named STT
-modes before adding any LLM or TTS loop.
+Stabilize and run the self-host STT language-routing experiment by proving local mock emit, then
+comparing RU/KZ/MIX recordings or uploaded audio files across named STT modes before adding any LLM
+or TTS loop.
 
 ## Done
 
@@ -66,6 +67,10 @@ modes before adding any LLM or TTS loop.
 - STT experiment framework: named modes (`mock`, `deepgram-multi-nova3`, `deepgram-ru-nova3`,
   `deepgram-ru-nova2`, `deepgram-default`), shared scenarios, heuristic transcript scoring,
   `/stt/experiment`, dev UI selectors/results, experiment docs, and helper scripts.
+- Hardened STT dev harness: safe voice-agent health response, health-first dev UI diagnostics,
+  network/CORS/non-2xx error classification, MediaRecorder warning, file upload fallback, local mock
+  scoring, and separate `selfhost:stt-mock`, `selfhost:stt-mock-emit`, and `selfhost:stt-file`
+  scripts.
 
 ## Not Started Yet
 
@@ -75,6 +80,6 @@ modes before adding any LLM or TTS loop.
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
-- Manual RU/KZ STT recording runs and final STT mode decision.
+- Manual RU/KZ STT uploaded-file/recording runs and final STT mode decision.
 - Self-host LLM and TTS response loop.
 - Self-host SIP/PSTN integration.

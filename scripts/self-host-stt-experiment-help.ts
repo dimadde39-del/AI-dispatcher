@@ -17,6 +17,14 @@ Start services:
 List scenarios:
   npm run selfhost:stt-scenarios
 
+Smoke tests:
+  npm run selfhost:stt-health
+  npm run selfhost:stt-mock
+  npm run selfhost:stt-mock-emit
+
+File test:
+  npm run selfhost:stt-file -- --file=C:\\path\\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-multi-nova3
+
 Modes:
   mock
   deepgram-multi-nova3

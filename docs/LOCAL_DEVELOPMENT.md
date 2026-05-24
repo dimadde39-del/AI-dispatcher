@@ -96,6 +96,8 @@ Security notes:
 - `npm run voice-agent:dev`
 - `npm run selfhost:stt-health`
 - `npm run selfhost:stt-mock`
+- `npm run selfhost:stt-mock-emit`
+- `npm run selfhost:stt-file`
 - `npm run selfhost:stt-scenarios`
 - `npm run selfhost:stt-experiment-help`
 - `npm run lead:status`
@@ -362,19 +364,60 @@ Open:
 http://localhost:3000/dev/selfhost-stt
 ```
 
-The page can record a short browser microphone clip and upload it to the voice-agent, or emit a typed
-mock transcript. The Python service then sends `call_started`, `transcript_updated`, and `call_ended`
-events to `/api/webhooks/self-host-voice`.
+The page checks `${NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL}/health` on load and shows whether the
+voice-agent is online, which URL it used, and the provider/mode returned by the service. If offline,
+run:
 
-Zero-cost mock path:
+```bash
+npm run voice-agent:dev
+```
+
+Then open:
+
+```text
+http://localhost:8001/health
+```
+
+Use Chrome or Edge on `localhost` for browser recording. Some embedded browser contexts do not expose
+MediaRecorder; when that happens, use the file upload or typed mock transcript path. A Vercel-hosted
+dev page cannot call a local `http://localhost:8001` voice-agent on your laptop unless the
+voice-agent is publicly reachable and `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` points at that public
+URL.
+
+The page can:
+
+- score typed mock transcripts locally even when the voice-agent is offline;
+- score uploaded `.webm`, `.wav`, or `.mp3` files through `/stt/experiment`;
+- record a short browser microphone clip when MediaRecorder is available;
+- emit a typed mock transcript through the Python service into `/api/webhooks/self-host-voice`.
+
+Zero-cost mock scoring path:
 
 ```bash
 npm run selfhost:stt-mock
 ```
 
+This command calls `/stt/experiment` with `mode=mock`, so it requires the Python voice-agent but does
+not require Deepgram and does not emit into the backend.
+
+Mock emit path:
+
+```bash
+npm run selfhost:stt-mock-emit
+```
+
 This command calls `/stt/transcribe-and-emit`, so it requires the Python voice-agent and the Next.js
 backend to be running. It may create a `self-host` call/lead and send a Telegram card if the backend
-can resolve a master and Telegram is configured.
+can resolve a master and Telegram is configured. Run this before live STT; it proves the local
+voice-agent -> webhook -> Supabase/Telegram pipeline works without paid STT.
+
+File upload path for prerecorded synthetic samples:
+
+```bash
+npm run selfhost:stt-file -- --file=C:\path\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-multi-nova3
+```
+
+Real phone number testing comes after local mock emit and local uploaded-audio STT are working.
 
 Optional Deepgram path:
 

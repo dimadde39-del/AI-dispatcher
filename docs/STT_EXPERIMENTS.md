@@ -42,6 +42,19 @@ npm run dev
 npm run voice-agent:dev
 ```
 
+First required smoke checks:
+
+```bash
+npm run selfhost:stt-health
+npm run selfhost:stt-mock
+npm run selfhost:stt-mock-emit
+```
+
+`selfhost:stt-mock` scores a known RU transcript without Deepgram. `selfhost:stt-mock-emit` sends a
+known mock transcript through `/stt/transcribe-and-emit` into the Next.js self-host webhook. It may
+create a call/lead and send a Telegram card when Telegram is configured and the backend resolves a
+master.
+
 Open:
 
 ```text
@@ -65,10 +78,18 @@ For each clip:
 
 1. Select the matching scenario in `/dev/selfhost-stt`.
 2. Select one STT mode.
-3. Read the scenario phrase naturally once.
-4. Click `Stop and Score`.
+3. Read the scenario phrase naturally once in Chrome or Edge on `localhost`.
+4. Click `Stop and Score`, or upload a pre-recorded `.webm`, `.wav`, or `.mp3` file.
 5. Save the returned transcript, score, missed keywords, warnings, and mode in a local notes file.
 6. Repeat the same audio phrase for every Deepgram mode being compared.
+
+If the page says MediaRecorder is unavailable, the browser/context cannot record audio. Use Chrome or
+Edge on `localhost`, or use file upload/mock transcript instead. If the voice-agent status is
+offline, run `npm run voice-agent:dev` and open `http://localhost:8001/health`.
+
+A Vercel-hosted copy of `/dev/selfhost-stt` cannot call a local `http://localhost:8001` voice-agent on
+your laptop. Use local Next.js for local voice-agent testing, or make the voice-agent publicly
+reachable and set `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` intentionally.
 
 ## Manual Curl
 
@@ -91,6 +112,12 @@ curl.exe -X POST "http://localhost:8001/stt/experiment" `
   -F "scenarioId=ru-urgent-plumbing" `
   -F "mode=deepgram-multi-nova3" `
   -F "file=@C:\path\sample.webm;type=audio/webm"
+```
+
+Scripted file upload example:
+
+```powershell
+npm run selfhost:stt-file -- --file=C:\path\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-multi-nova3
 ```
 
 Mock scoring example:
@@ -128,5 +155,7 @@ Fail for a mode:
 
 ## Next Gate
 
-Pick one STT mode, document why, and only then start the self-host LLM/TTS loop. Vapi remains the
-fallback until the self-host path beats it on RU/KZ call quality and operational reliability.
+After local mock emit and file/recording STT pass, pick one STT mode, document why, and only then
+start the self-host LLM/TTS loop. Real phone number testing comes after the local STT pipeline works.
+Vapi remains the fallback until the self-host path beats it on RU/KZ call quality and operational
+reliability.
