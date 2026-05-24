@@ -63,6 +63,9 @@ Security notes:
 - `npm run telegram:simulate-accept`
 - `npm run telegram:simulate-spam`
 - `npm run vapi:ready`
+- `npm run vapi:live-ready`
+- `npm run vapi:live-checklist`
+- `npm run vapi:recent`
 - `npm run vapi:simulate`
 - `npm run lead:status`
 
@@ -203,6 +206,26 @@ Check local Vapi readiness without printing secrets:
 npm run vapi:ready
 ```
 
+For the current deployed pilot app, the Vapi Server URL is:
+
+```text
+https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi
+```
+
+Before a real Vapi call, run the live-readiness helpers. They print presence checks and safe setup
+details only; they do not print `VAPI_API_KEY` or `VAPI_WEBHOOK_SECRET` values.
+
+```bash
+npm run vapi:live-ready
+npm run vapi:live-checklist
+```
+
+After a live Vapi attempt, inspect safe recent call metadata:
+
+```bash
+npm run vapi:recent
+```
+
 Simulate the fixture end-of-call report through the parser and application use case:
 
 ```bash
@@ -226,6 +249,8 @@ event.
 Current extraction is deterministic, not LLM-based. It uses Vapi summary/transcript fields, simple
 address heuristics, urgency/safety keyword rules, and raw payload persistence for debugging.
 
+Detailed live setup steps and troubleshooting are in `docs/VAPI_LIVE_SETUP.md`.
+
 ## Expected Workflow
 
 1. Inspect existing project files before changing scripts.
@@ -243,6 +268,8 @@ Run:
 - `npm run env:check`
 - `npm run telegram:ready`
 - `npm run vapi:ready`
+- `npm run vapi:live-ready`
+- `npm run vapi:live-checklist`
 - `npm run db:verify`
 - `npm run smoke:admin-data`
 - `npm run build`

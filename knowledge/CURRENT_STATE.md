@@ -2,7 +2,7 @@
 
 ## Phase
 
-Current phase: Vapi webhook foundation built.
+Current phase: preparing the first real Vapi end-of-call-report test.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -116,6 +116,20 @@ The product sells saved orders, not an "AI bot".
 - Local fixture simulation is available through `npm run vapi:simulate`; readiness checks are
   available through `npm run vapi:ready`.
 
+## Vapi Live Test Preparation
+
+- Public Vapi Server URL for the pilot app is
+  `https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi`.
+- Live setup guide is in `docs/VAPI_LIVE_SETUP.md`.
+- Russian production-shaped assistant prompt is in `prompts/vapi/dispatcher-ru.md`.
+- `npm run vapi:live-ready` prints safe public URL, webhook URL, and auth presence checks.
+- `npm run vapi:live-checklist` checks safe live-test prerequisites, including Telegram readiness,
+  demo master Telegram configuration, and assigned AI number presence.
+- `npm run vapi:recent` prints recent Vapi call metadata without phone numbers, transcripts,
+  recordings, addresses, or raw payloads.
+- Current webhook authentication expects the `x-vapi-webhook-secret` header. If Vapi cannot send
+  that header, the workaround must be explicitly documented before live production traffic.
+
 ## Verified Live Data
 
 - Required Supabase tables exist.
@@ -137,4 +151,5 @@ The product sells saved orders, not an "AI bot".
 ## Next Step
 
 Configure the Vapi assistant and phone number, set the deployed Server URL to
-`https://YOUR_APP_URL/api/webhooks/vapi`, and run a real end-of-call report test.
+`https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi`, configure webhook authentication, and run
+a real end-of-call report test.

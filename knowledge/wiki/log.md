@@ -1,5 +1,11 @@
 # Wiki Operation Log
 
+## 2026-05-24
+
+- Prepared the project for the first real Vapi end-of-call-report test: added the exact deployed
+  Vapi Server URL docs, shared-secret auth setup guidance, a concise Russian dispatcher prompt,
+  safe live readiness/checklist scripts, and a recent Vapi calls helper that avoids sensitive fields.
+
 ## 2026-05-23
 
 - Built the Vapi webhook foundation: Vapi parser/verifier/provider adapter, normalized voice events,

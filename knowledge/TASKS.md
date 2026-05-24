@@ -12,7 +12,7 @@
 
 ## Current Task
 
-Build the Vapi webhook foundation.
+Prepare the project for the first real Vapi end-of-call-report test.
 
 ## Done
 
@@ -47,6 +47,8 @@ Build the Vapi webhook foundation.
 - Vapi webhook foundation: parser/verifier/provider abstraction, thin webhook route, call lifecycle
   use cases, master resolution by AI number, deterministic end-of-call lead extraction, Telegram
   lead-card integration, fixtures, simulation script, admin visibility, and tests.
+- Vapi live-test preparation: public Server URL docs, shared-secret auth instructions, Russian
+  assistant prompt, live readiness/checklist helpers, and safe recent-call diagnostics.
 
 ## Not Started Yet
 

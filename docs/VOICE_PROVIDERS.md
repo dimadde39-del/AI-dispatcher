@@ -26,6 +26,15 @@ Vapi Server URL should point to:
 https://YOUR_APP_URL/api/webhooks/vapi
 ```
 
+For the current deployed pilot app, use:
+
+```text
+https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi
+```
+
+The live setup checklist is maintained in `docs/VAPI_LIVE_SETUP.md`. Run
+`npm run vapi:live-ready` and `npm run vapi:live-checklist` before the first real Vapi call.
+
 The webhook route is intentionally thin: it reads JSON, verifies the configured secret, asks the Vapi
 provider adapter to parse the payload, and hands a normalized `VoiceEvent` to the application use
 case.
@@ -36,6 +45,9 @@ Normalized events currently supported:
 - `CALL_ENDED`
 - `TRANSCRIPT_UPDATED`
 - `UNKNOWN`
+
+Vapi `end-of-call-report` messages are the required path for lead creation. Status and transcript
+messages can create or update call records but should not create leads on their own.
 
 Vapi payloads are parsed defensively from `payload.message` when present, and from the payload root
 when Vapi sends the message directly. Unknown event types are preserved and should not crash the
