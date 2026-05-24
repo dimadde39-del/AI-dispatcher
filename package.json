@@ -37,6 +37,8 @@
     "voice-agent:dev": "cd services/voice-agent && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8001 --env-file .env",
     "selfhost:stt-health": "tsx scripts/self-host-stt-health.ts",
     "selfhost:stt-mock": "tsx scripts/self-host-stt-mock.ts",
+    "selfhost:stt-scenarios": "tsx scripts/self-host-stt-scenarios.ts",
+    "selfhost:stt-experiment-help": "tsx scripts/self-host-stt-experiment-help.ts",
     "lead:status": "tsx scripts/lead-status.ts"
   },
   "dependencies": {

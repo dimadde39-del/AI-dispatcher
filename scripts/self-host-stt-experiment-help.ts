@@ -1,0 +1,34 @@
+import { loadEnvFiles } from "./load-env";
+
+loadEnvFiles();
+
+function voiceAgentUrl(): string {
+  return (process.env.NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL?.trim() || "http://localhost:8001").replace(/\/+$/u, "");
+}
+
+const url = `${voiceAgentUrl()}/stt/experiment`;
+
+console.log(`Self-host STT experiment endpoint: ${url}
+
+Start services:
+  npm run dev
+  npm run voice-agent:dev
+
+List scenarios:
+  npm run selfhost:stt-scenarios
+
+Modes:
+  mock
+  deepgram-multi-nova3
+  deepgram-ru-nova3
+  deepgram-ru-nova2
+  deepgram-default
+
+PowerShell audio upload example:
+  curl.exe -X POST "${url}" -F "scenarioId=ru-urgent-plumbing" -F "mode=deepgram-multi-nova3" -F "file=@C:\\path\\sample.webm;type=audio/webm"
+
+Mock scoring example:
+  curl.exe -X POST "${url}" -H "content-type: application/json" -d "{\\"scenarioId\\":\\"ru-urgent-plumbing\\",\\"mode\\":\\"mock\\",\\"text\\":\\"truba test\\"}"
+
+Deepgram modes require DEEPGRAM_API_KEY in services/voice-agent/.env. This is an STT-only experiment.
+`);

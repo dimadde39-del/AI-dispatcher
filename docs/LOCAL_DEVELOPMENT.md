@@ -20,6 +20,9 @@ Optional future variables:
 - `VAPI_WEBHOOK_SECRET`
 - `VAPI_ASSISTANT_ID`
 - `SELF_HOST_VOICE_WEBHOOK_SECRET`
+- `STT_PROVIDER`
+- `STT_MODE`
+- `DEEPGRAM_API_KEY`
 - `NEXT_PUBLIC_VAPI_PUBLIC_KEY`
 - `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL`
 - `ENABLE_DEV_VAPI_WEB_CALL`
@@ -33,6 +36,9 @@ for Telegram-specific operations such as sending a lead card or answering a call
 simulate Vapi fixture payloads without live Vapi credentials.
 `SELF_HOST_VOICE_WEBHOOK_SECRET` protects `/api/webhooks/self-host-voice` when configured. Local
 self-host dry-runs can run without it outside production.
+`STT_PROVIDER`, `STT_MODE`, and `DEEPGRAM_API_KEY` are used by the Python voice-agent for local STT
+experiments. Deepgram live calls are optional and should be run only when intentionally comparing
+paid STT modes.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` is safe for browser use and defaults to
@@ -90,6 +96,8 @@ Security notes:
 - `npm run voice-agent:dev`
 - `npm run selfhost:stt-health`
 - `npm run selfhost:stt-mock`
+- `npm run selfhost:stt-scenarios`
+- `npm run selfhost:stt-experiment-help`
 - `npm run lead:status`
 
 ## Database
@@ -372,13 +380,33 @@ Optional Deepgram path:
 
 ```bash
 STT_PROVIDER=deepgram
+STT_MODE=deepgram-multi-nova3
 DEEPGRAM_API_KEY=
 STT_LANGUAGE_MODE=ru-kk
 ```
 
-The current Deepgram experiment uses `language=multi&model=nova-3` for uploaded audio. Deepgram docs
-show that setting for multilingual code-switching and list Russian support, but Kazakh support is not
-clearly listed for Nova-3. Treat it as an empirical RU/KZ quality test.
+Named STT modes are configured in `services/voice-agent/app/stt_modes.py`: `mock`,
+`deepgram-multi-nova3`, `deepgram-ru-nova3`, `deepgram-ru-nova2`, and `deepgram-default`.
+`STT_PROVIDER=deepgram` still works for the legacy env-driven path, while `STT_MODE` selects a named
+experiment mode.
+
+The experiment endpoint scores one audio sample against one scenario:
+
+```text
+POST http://localhost:8001/stt/experiment
+```
+
+The dev page now uses `/stt/experiment` for scored recordings and keeps the typed mock transcript
+emit path for checking the existing self-host webhook pipeline.
+
+Useful helpers:
+
+```bash
+npm run selfhost:stt-scenarios
+npm run selfhost:stt-experiment-help
+```
+
+Detailed manual steps and pass/fail rules are in `docs/STT_EXPERIMENTS.md`.
 
 For self-host verification, `npm run vapi:recent` is not relevant. Check:
 

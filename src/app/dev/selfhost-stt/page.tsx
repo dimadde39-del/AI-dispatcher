@@ -4,8 +4,8 @@ import { SelfHostSttClient } from "./SelfHostSttClient";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Self-Host STT Dev | AI Dispatcher",
-  description: "Internal upload-based microphone test page for self-host STT events.",
+  title: "Self-Host STT Experiment | AI Dispatcher",
+  description: "Internal RU/KZ STT mode experiment page for the self-host voice spike.",
 };
 
 export default function SelfHostSttDevPage() {

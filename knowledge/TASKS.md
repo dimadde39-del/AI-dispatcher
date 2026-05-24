@@ -13,7 +13,8 @@
 
 ## Current Task
 
-Build the self-host upload-based STT spike without removing the existing Vapi integration.
+Run the self-host STT language-routing experiment by comparing RU/KZ/MIX recordings across named STT
+modes before adding any LLM or TTS loop.
 
 ## Done
 
@@ -62,6 +63,9 @@ Build the self-host upload-based STT spike without removing the existing Vapi in
 - Upload-based STT milestone: voice-agent `/stt/transcribe` and `/stt/transcribe-and-emit`, mock STT
   provider, optional Deepgram provider, `/dev/selfhost-stt` browser recorder/mock page, and STT
   health/mock scripts.
+- STT experiment framework: named modes (`mock`, `deepgram-multi-nova3`, `deepgram-ru-nova3`,
+  `deepgram-ru-nova2`, `deepgram-default`), shared scenarios, heuristic transcript scoring,
+  `/stt/experiment`, dev UI selectors/results, experiment docs, and helper scripts.
 
 ## Not Started Yet
 
@@ -71,6 +75,6 @@ Build the self-host upload-based STT spike without removing the existing Vapi in
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
-- RU/KZ STT language routing spike.
+- Manual RU/KZ STT recording runs and final STT mode decision.
 - Self-host LLM and TTS response loop.
 - Self-host SIP/PSTN integration.

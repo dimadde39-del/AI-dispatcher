@@ -9,6 +9,9 @@ from .backend_client import BackendClient, BackendClientError
 from .config import load_settings
 from .events import build_stt_emit_events
 from .stt import SttError, SttResult, transcribe_with_provider
+from .stt_modes import list_stt_mode_configs
+from .stt_scenarios import get_stt_scenario, list_stt_scenarios
+from .stt_scoring import score_transcript
 
 app = FastAPI(title="AI Dispatcher Self-Host Voice Agent Spike")
 
@@ -41,9 +44,24 @@ def health() -> dict[str, object]:
         "backendBaseUrlConfigured": bool(settings.backend_base_url),
         "webhookSecretConfigured": bool(settings.self_host_voice_webhook_secret),
         "sttProvider": settings.stt_provider,
+        "sttMode": settings.stt_mode or settings.stt_provider,
         "sttLanguageMode": settings.stt_language_mode,
         "deepgramConfigured": bool(settings.deepgram_api_key),
         "productionReady": False,
+    }
+
+
+@app.get("/stt/modes")
+def stt_modes() -> dict[str, object]:
+    return {
+        "modes": [mode.to_public_dict() for mode in list_stt_mode_configs()],
+    }
+
+
+@app.get("/stt/scenarios")
+def stt_scenarios() -> dict[str, object]:
+    return {
+        "scenarios": [scenario.to_public_dict() for scenario in list_stt_scenarios()],
     }
 
 
@@ -56,6 +74,8 @@ async def _request_input(request: Request) -> dict[str, Any]:
         return {
             "text": body.get("text"),
             "provider": body.get("provider"),
+            "mode": body.get("mode"),
+            "scenario_id": body.get("scenarioId") or body.get("scenario_id"),
             "provider_call_id": body.get("providerCallId"),
             "ai_number": body.get("aiNumber"),
             "customer_phone": body.get("customerPhone"),
@@ -75,6 +95,8 @@ async def _request_input(request: Request) -> dict[str, Any]:
         return {
             "text": _form_text(form.get("text")),
             "provider": _form_text(form.get("provider")),
+            "mode": _form_text(form.get("mode")),
+            "scenario_id": _form_text(form.get("scenarioId")) or _form_text(form.get("scenario_id")),
             "provider_call_id": _form_text(form.get("providerCallId")),
             "ai_number": _form_text(form.get("aiNumber")),
             "customer_phone": _form_text(form.get("customerPhone")),
@@ -93,8 +115,12 @@ def _safe_response(result: SttResult) -> dict[str, object]:
     response: dict[str, object] = {
         "ok": True,
         "provider": result.provider,
+        "mode": result.mode,
         "transcript": result.transcript,
     }
+
+    if result.mode_config:
+        response["modeConfig"] = result.mode_config
 
     if result.raw:
         response["raw"] = result.raw
@@ -107,6 +133,7 @@ def _transcribe(input_data: dict[str, Any]) -> SttResult:
         return transcribe_with_provider(
             load_settings(),
             provider_name=_text_or_none(input_data.get("provider")),
+            mode_name=_text_or_none(input_data.get("mode")),
             text=_text_or_none(input_data.get("text")),
             audio=input_data.get("audio"),
             content_type=_text_or_none(input_data.get("content_type")),
@@ -136,6 +163,32 @@ async def transcribe(request: Request) -> dict[str, object]:
     return _safe_response(_transcribe(input_data))
 
 
+@app.post("/stt/experiment")
+async def stt_experiment(request: Request) -> dict[str, object]:
+    input_data = await _request_input(request)
+    scenario_id = _text_or_none(input_data.get("scenario_id"))
+    if not scenario_id:
+        raise HTTPException(status_code=400, detail="scenarioId is required.")
+
+    try:
+        scenario = get_stt_scenario(scenario_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=400, detail=f"Unknown STT scenario: {scenario_id}") from exc
+
+    result = _transcribe(input_data)
+    scored = score_transcript(result.transcript, scenario)
+    score_payload = scored.to_public_dict()
+
+    return {
+        "ok": True,
+        "mode": result.mode,
+        "modeConfig": result.mode_config,
+        "scenario": scenario.to_public_dict(),
+        "transcript": result.transcript,
+        **score_payload,
+    }
+
+
 @app.post("/stt/transcribe-and-emit")
 async def transcribe_and_emit(request: Request) -> dict[str, object]:
     input_data = await _request_input(request)
@@ -163,6 +216,8 @@ async def transcribe_and_emit(request: Request) -> dict[str, object]:
     return {
         "ok": True,
         "provider": result.provider,
+        "mode": result.mode,
+        "modeConfig": result.mode_config,
         "providerCallId": provider_call_id,
         "transcript": result.transcript,
         "emittedEvents": len(emitted),

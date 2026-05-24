@@ -2,8 +2,8 @@
 
 ## Phase
 
-Current phase: self-host voice upload-based STT spike after the first live Vapi Web Call exposed
-RU/KZ runtime reliability issues.
+Current phase: self-host STT language-routing experiment after the upload-based STT spike exposed the
+need to compare RU/KZ/MIX transcription modes before any LLM/TTS loop.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -147,6 +147,21 @@ The product sells saved orders, not an "AI bot".
 - This milestone does not implement realtime streaming, LLM responses, TTS, SIP/PSTN, Twilio,
   Zadarma, billing, or production deployment.
 
+## Implemented Self-Host STT Experiment Framework
+
+- Named STT modes exist for `mock`, `deepgram-multi-nova3`, `deepgram-ru-nova3`,
+  `deepgram-ru-nova2`, and `deepgram-default`.
+- `STT_PROVIDER` still works for the legacy mock/deepgram path; `STT_MODE` selects a named
+  experiment mode.
+- Shared STT scenarios live in `services/voice-agent/app/stt_scenarios.py` for RU urgent plumbing,
+  KZ water leak, mixed RU/KZ water leak, gas emergency, electric danger, and noisy fallback phrases.
+- `POST /stt/experiment` transcribes one sample, scores keyword hits/misses, detects Cyrillic/Kazakh
+  signals, flags likely wrong-language transcripts, and returns warnings.
+- `/dev/selfhost-stt` now has scenario and mode selectors, scored recording uploads, score details,
+  and the original mock transcript emit path for checking the backend/Telegram pipeline.
+- `docs/STT_EXPERIMENTS.md` defines recording steps, mode comparison, pass/fail rules, and the next
+  gate to choose STT before adding self-host LLM/TTS.
+
 ## Vapi Live Test Preparation
 
 - Public Vapi Server URL for the pilot app is
@@ -193,6 +208,6 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Run the browser upload STT and mock transcript paths against Supabase and Telegram intentionally,
-compare RU/KZ transcript quality, then decide the first STT language-routing experiment. Keep Vapi
-available as the fallback while the self-host spike proves RU/KZ quality.
+Record the six synthetic STT scenarios across the Deepgram modes, compare scores and transcripts,
+then choose one STT mode before starting any self-host LLM/TTS response loop. Keep Vapi available as
+the fallback while the self-host spike proves RU/KZ quality.

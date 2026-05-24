@@ -54,7 +54,7 @@ x-self-host-voice-secret: <secret>
 
 1. Mock transcript to `VoiceEvent` to Telegram.
 2. Browser microphone to transcript. Done as upload-based STT spike.
-3. STT language routing for RU/KZ.
+3. STT language routing for RU/KZ. Current experiment framework is in place.
 4. LLM response loop.
 5. TTS response loop.
 6. Full call-end report to lead creation.
@@ -129,19 +129,22 @@ The page supports:
 
 - Browser microphone recording upload.
 - Typed mock transcript emission.
-- RU, KZ, mixed RU/KZ, and gas test phrases.
+- Scenario selection for RU, KZ, mixed RU/KZ, gas, electric danger, and noisy fallback phrases.
+- STT mode selection for mock plus Deepgram baselines.
+- `/stt/experiment` scoring with keyword hits, missed keywords, language signals, and warnings.
 - Safe event/result logs.
 
 Deepgram is optional. Set this only when intentionally testing external STT:
 
 ```bash
 STT_PROVIDER=deepgram
+STT_MODE=deepgram-multi-nova3
 DEEPGRAM_API_KEY=...
 ```
 
-The Deepgram experiment uses the pre-recorded Listen API with `language=multi&model=nova-3`, based
-on Deepgram's current multilingual code-switching docs:
-https://developers.deepgram.com/docs/multilingual-code-switching
+The named mode assumptions live in `services/voice-agent/app/stt_modes.py`. The primary candidate is
+`deepgram-multi-nova3`, which sends `language=multi&model=nova-3`; the RU-only nova-3 and nova-2
+modes are baselines, and `deepgram-default` sends no explicit model or language.
 
 Important caveat: Deepgram's current model/language overview clearly lists Russian for Nova-3, but
 Kazakh is not clearly listed there. RU/KZ mixed quality must be measured with real recordings before
@@ -153,3 +156,6 @@ any migration decision.
 - `/admin/leads`
 - Telegram card delivery
 - Supabase `calls.provider = self-host`
+
+Detailed manual experiment steps are in `docs/STT_EXPERIMENTS.md`. Choose the STT mode before adding
+any self-host LLM/TTS loop.

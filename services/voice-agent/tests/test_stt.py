@@ -2,6 +2,9 @@ import unittest
 
 from app.events import SelfHostVoiceEvent, build_stt_emit_events
 from app.stt import MockSttProvider, SttError
+from app.stt_modes import STT_MODE_CONFIGS
+from app.stt_scenarios import STT_SCENARIOS
+from app.stt_scoring import score_transcript
 
 
 class MockSttProviderTests(unittest.TestCase):
@@ -15,6 +18,58 @@ class MockSttProviderTests(unittest.TestCase):
     def test_mock_provider_rejects_empty_text(self) -> None:
         with self.assertRaises(SttError):
             MockSttProvider().transcribe_text(" ")
+
+
+class SttExperimentScoringTests(unittest.TestCase):
+    def test_scores_ru_phrase(self) -> None:
+        scenario = STT_SCENARIOS["ru-urgent-plumbing"]
+        result = score_transcript(scenario.original_text, scenario)
+
+        self.assertGreaterEqual(result.score, 90)
+        self.assertTrue(result.has_russian)
+        self.assertFalse(result.likely_wrong_language)
+        self.assertEqual(result.missed_keywords, [])
+
+    def test_scores_kz_phrase(self) -> None:
+        scenario = STT_SCENARIOS["kz-water-leak"]
+        result = score_transcript(scenario.original_text, scenario)
+
+        self.assertGreaterEqual(result.score, 90)
+        self.assertTrue(result.has_kazakh_chars)
+        self.assertFalse(result.likely_wrong_language)
+        self.assertEqual(result.missed_keywords, [])
+
+    def test_detects_missed_keywords(self) -> None:
+        scenario = STT_SCENARIOS["ru-urgent-plumbing"]
+        result = score_transcript("Труба течет.", scenario)
+
+        self.assertIn("ванной", result.missed_keywords)
+        self.assertIn("Шымкент", result.missed_keywords)
+        self.assertLess(result.score, 70)
+
+    def test_detects_likely_wrong_language_spanish_transcript(self) -> None:
+        scenario = STT_SCENARIOS["ru-urgent-plumbing"]
+        result = score_transcript("hola necesito un plomero gracias", scenario)
+
+        self.assertTrue(result.likely_wrong_language)
+        self.assertIn("likely_wrong_language", result.warnings)
+        self.assertLess(result.score, 50)
+
+
+class SttModeConfigTests(unittest.TestCase):
+    def test_named_config_modes_exist(self) -> None:
+        expected_modes = {
+            "mock",
+            "deepgram-multi-nova3",
+            "deepgram-ru-nova3",
+            "deepgram-ru-nova2",
+            "deepgram-default",
+        }
+
+        self.assertEqual(set(STT_MODE_CONFIGS.keys()), expected_modes)
+        self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].provider, "deepgram")
+        self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].model, "nova-3")
+        self.assertEqual(STT_MODE_CONFIGS["deepgram-multi-nova3"].language, "multi")
 
 
 class SelfHostVoiceEventPayloadTests(unittest.TestCase):

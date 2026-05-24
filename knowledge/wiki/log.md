@@ -2,6 +2,11 @@
 
 ## 2026-05-24
 
+- Built the self-host STT language-routing experiment framework: named mock/Deepgram modes, shared
+  RU/KZ/MIX/gas/electric/noisy scenarios, heuristic keyword/language scoring, `/stt/experiment`,
+  `/stt/modes`, `/stt/scenarios`, dev UI selectors and score display, helper scripts, docs, and
+  Python unit tests. This remains STT-only and keeps Vapi plus the existing Telegram/Supabase lead
+  pipeline unchanged.
 - Built self-host voice spike milestone 2 as an upload-based STT path: Python voice-agent
   `/stt/transcribe` and `/stt/transcribe-and-emit`, mock provider, optional Deepgram provider,
   browser dev page `/dev/selfhost-stt`, STT health/mock scripts, and tests for mock STT plus event

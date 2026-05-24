@@ -47,7 +47,9 @@ npm run selfhost:simulate -- --dry-run
 BACKEND_BASE_URL=http://localhost:3000
 SELF_HOST_VOICE_WEBHOOK_SECRET=
 STT_PROVIDER=mock
+STT_MODE=mock
 STT_LANGUAGE_MODE=ru-kk
+DEEPGRAM_MODEL=nova-3
 DEEPGRAM_API_KEY=
 OPENAI_API_KEY=
 DEEPSEEK_API_KEY=
@@ -56,9 +58,14 @@ TTS_PROVIDER_API_KEY=
 
 - `BACKEND_BASE_URL`: Next.js backend base URL.
 - `SELF_HOST_VOICE_WEBHOOK_SECRET`: sent as `x-self-host-voice-secret` when configured.
-- `STT_PROVIDER`: `mock` by default. Set `deepgram` only when `DEEPGRAM_API_KEY` is configured.
-- `STT_LANGUAGE_MODE`: `ru-kk` by default. The Deepgram experiment maps this to
-  `language=multi&model=nova-3`.
+- `STT_PROVIDER`: `mock` by default. The legacy `deepgram` value still works when
+  `DEEPGRAM_API_KEY` is configured.
+- `STT_MODE`: named experiment mode. Use `deepgram-multi-nova3`, `deepgram-ru-nova3`,
+  `deepgram-ru-nova2`, or `deepgram-default` for paid Deepgram comparisons.
+- `STT_LANGUAGE_MODE`: legacy Deepgram language mode used only when `STT_PROVIDER=deepgram` is used
+  without a named `STT_MODE`.
+- `DEEPGRAM_MODEL`: legacy Deepgram model used only when `STT_PROVIDER=deepgram` is used without a
+  named `STT_MODE`.
 - `DEEPGRAM_API_KEY`: optional STT provider key.
 - `OPENAI_API_KEY` or `DEEPSEEK_API_KEY`: future LLM provider key.
 - `TTS_PROVIDER_API_KEY`: future TTS provider key.
@@ -85,6 +92,9 @@ STT endpoints:
 ```text
 POST /stt/transcribe
 POST /stt/transcribe-and-emit
+POST /stt/experiment
+GET /stt/modes
+GET /stt/scenarios
 ```
 
 Mock JSON:
@@ -97,9 +107,11 @@ Mock JSON:
 ```
 
 Audio upload uses multipart form field `file`. With `STT_PROVIDER=deepgram`, uploaded audio is sent
-to Deepgram's pre-recorded `/v1/listen` API. The current RU/KZ setting is experimental: Deepgram
-documents `language=multi&model=nova-3` for multilingual code-switching and lists Russian support,
-but Kazakh support is not clearly listed for Nova-3. Treat this as a quality test, not a guarantee.
+to Deepgram's pre-recorded `/v1/listen` API. With `STT_MODE=deepgram-multi-nova3`, the service sends
+`language=multi&model=nova-3`. Treat every Deepgram mode as a quality test, not a guarantee.
+
+`POST /stt/experiment` accepts `scenarioId`, optional `mode`, and an uploaded audio `file`. For local
+scorer checks it also accepts JSON with `mode=mock` and `text`.
 
 Do not put lead creation, Telegram formatting, Supabase writes, or billing behavior in this service.
 It should only handle voice/STT orchestration and emit normalized events.
