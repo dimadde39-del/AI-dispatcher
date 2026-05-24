@@ -22,10 +22,12 @@
     "telegram:test-card": "tsx scripts/telegram-test-card.ts",
     "telegram:simulate-accept": "tsx scripts/telegram-simulate-callback.ts --action=accept",
     "telegram:simulate-spam": "tsx scripts/telegram-simulate-callback.ts --action=spam",
+    "dispatcher:policy-tests": "tsx scripts/dispatcher-policy-tests.ts",
     "vapi:ready": "tsx scripts/vapi-readiness.ts",
     "vapi:live-ready": "tsx scripts/vapi-live-readiness.ts",
     "vapi:live-checklist": "tsx scripts/vapi-live-checklist.ts",
     "vapi:recent": "tsx scripts/vapi-recent-calls.ts",
+    "vapi:chat-tests": "tsx scripts/vapi-chat-tests.ts",
     "vapi:simulate": "tsx scripts/vapi-simulate-event.ts",
     "lead:status": "tsx scripts/lead-status.ts"
   },

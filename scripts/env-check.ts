@@ -14,6 +14,7 @@ const result = serverEnvSchema.safeParse({
   TELEGRAM_WEBHOOK_SECRET: process.env.TELEGRAM_WEBHOOK_SECRET,
   VAPI_API_KEY: process.env.VAPI_API_KEY,
   VAPI_WEBHOOK_SECRET: process.env.VAPI_WEBHOOK_SECRET,
+  VAPI_ASSISTANT_ID: process.env.VAPI_ASSISTANT_ID,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
   APP_BASE_URL: process.env.APP_BASE_URL,

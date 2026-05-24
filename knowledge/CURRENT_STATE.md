@@ -129,6 +129,12 @@ The product sells saved orders, not an "AI bot".
   recordings, addresses, or raw payloads.
 - Current webhook authentication expects the `x-vapi-webhook-secret` header. If Vapi cannot send
   that header, the workaround must be explicitly documented before live production traffic.
+- `npm run dispatcher:policy-tests` prints a Russian-first RU/KZ assistant behavior checklist without
+  calling Vapi or requiring billing.
+- Optional `npm run vapi:chat-tests` uses Vapi Chat with `VAPI_API_KEY` and `VAPI_ASSISTANT_ID`, but
+  may return `402` until billing/payment method is configured. It is not part of required validation.
+- Policy and Chat tests do not replace real phone/Web SDK end-to-end validation because they do not
+  validate audio, STT, telephony, webhook delivery, or Vapi end-of-call-report behavior.
 
 ## Verified Live Data
 

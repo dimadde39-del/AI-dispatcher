@@ -93,6 +93,37 @@ Optional safe diagnostics:
 npm run vapi:recent
 ```
 
+## Assistant Behavior Checks
+
+Local checklist tests do not call Vapi and do not require billing:
+
+```bash
+npm run dispatcher:policy-tests
+```
+
+The checklist language is primarily Russian, with Russian, Kazakh, and mixed RU/KZ caller examples.
+Expected behavior is Russian. Telegram and master-facing summaries should remain Russian.
+
+These policy tests are behavior checklists only. They do not validate speech-to-text, audio quality,
+Vapi webhook delivery, phone number setup, or end-of-call-report payloads.
+
+Optional Vapi Chat tests are available for later:
+
+```bash
+npm run vapi:chat-tests
+```
+
+They use `VAPI_API_KEY` and `VAPI_ASSISTANT_ID`, defaulting to
+`cc79d655-ed1f-47fb-ab03-a55558e8f48a`. Vapi Chat currently requires billing/payment method for this
+account path; if Vapi returns `402`, the script exits cleanly with:
+
+```text
+Vapi Chat requires billing/payment method.
+```
+
+Do not include `vapi:chat-tests` in required build validation until billing/payment is intentionally
+configured.
+
 ## One Test Call
 
 1. In Vercel, confirm the environment variables above are set.
@@ -109,6 +140,9 @@ npm run vapi:recent
 Do not fake a live test by manually posting a fixture. Fixtures are still useful for parser and local
 application checks, but the live milestone is Vapi sending the end-of-call report to the deployed
 webhook.
+
+Real end-to-end validation still requires a real phone call or Vapi Web SDK call. Chat-mode tests do
+not validate call audio, STT, telephony, or webhook behavior.
 
 ## Verification
 

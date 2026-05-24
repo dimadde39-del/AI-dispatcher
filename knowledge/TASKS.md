@@ -49,11 +49,14 @@ Prepare the project for the first real Vapi end-of-call-report test.
   lead-card integration, fixtures, simulation script, admin visibility, and tests.
 - Vapi live-test preparation: public Server URL docs, shared-secret auth instructions, Russian
   assistant prompt, live readiness/checklist helpers, and safe recent-call diagnostics.
+- Vapi assistant behavior test preparation: local Russian-first RU/KZ policy checklist script and
+  optional Vapi Chat runner that skips cleanly when billing/payment or API key is unavailable.
 
 ## Not Started Yet
 
 - Authentication.
 - Billing.
 - Live Vapi assistant/phone number configuration.
+- Real phone/Web SDK Vapi end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.

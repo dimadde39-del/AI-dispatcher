@@ -35,6 +35,12 @@ https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi
 The live setup checklist is maintained in `docs/VAPI_LIVE_SETUP.md`. Run
 `npm run vapi:live-ready` and `npm run vapi:live-checklist` before the first real Vapi call.
 
+Assistant behavior can be reviewed locally with `npm run dispatcher:policy-tests`. This is a
+Russian-first RU/KZ checklist and does not call Vapi or require billing. Optional `npm run
+vapi:chat-tests` uses the Vapi Chat API and requires `VAPI_API_KEY`; current Vapi Chat access may
+return `402` until billing/payment method is configured. Chat tests are not webhook, audio, STT, or
+telephony validation.
+
 The webhook route is intentionally thin: it reads JSON, verifies the configured secret, asks the Vapi
 provider adapter to parse the payload, and hands a normalized `VoiceEvent` to the application use
 case.

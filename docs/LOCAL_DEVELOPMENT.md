@@ -18,6 +18,7 @@ Optional future variables:
 - `TELEGRAM_WEBHOOK_SECRET`
 - `VAPI_API_KEY`
 - `VAPI_WEBHOOK_SECRET`
+- `VAPI_ASSISTANT_ID`
 - `OPENAI_API_KEY`
 
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
@@ -62,10 +63,12 @@ Security notes:
 - `npm run telegram:test-card`
 - `npm run telegram:simulate-accept`
 - `npm run telegram:simulate-spam`
+- `npm run dispatcher:policy-tests`
 - `npm run vapi:ready`
 - `npm run vapi:live-ready`
 - `npm run vapi:live-checklist`
 - `npm run vapi:recent`
+- `npm run vapi:chat-tests`
 - `npm run vapi:simulate`
 - `npm run lead:status`
 
@@ -251,6 +254,32 @@ address heuristics, urgency/safety keyword rules, and raw payload persistence fo
 
 Detailed live setup steps and troubleshooting are in `docs/VAPI_LIVE_SETUP.md`.
 
+## Dispatcher Behavior Testing
+
+Run local assistant policy checklists without calling Vapi:
+
+```bash
+npm run dispatcher:policy-tests
+```
+
+These tests print ten manual behavior scenarios. The checklist language is Russian-first and covers
+Russian, Kazakh, and mixed RU/KZ caller examples. Expected assistant behavior and Telegram/master
+summaries remain Russian.
+
+The checklist does not validate speech-to-text, audio behavior, phone/Web SDK behavior, or webhook
+delivery. It is a lightweight prompt-policy review before a real call.
+
+Optional Vapi Chat tests are available for later:
+
+```bash
+npm run vapi:chat-tests
+```
+
+They read `VAPI_API_KEY` and `VAPI_ASSISTANT_ID`, defaulting to
+`cc79d655-ed1f-47fb-ab03-a55558e8f48a`. If `VAPI_API_KEY` is missing, the script skips cleanly. If
+Vapi returns `402`, the script reports that Vapi Chat requires billing/payment method. Do not include
+this command in required validation until billing/payment is intentionally configured.
+
 ## Expected Workflow
 
 1. Inspect existing project files before changing scripts.
@@ -269,6 +298,7 @@ Run:
 - `npm run telegram:ready`
 - `npm run vapi:ready`
 - `npm run vapi:live-ready`
+- `npm run dispatcher:policy-tests`
 - `npm run vapi:live-checklist`
 - `npm run db:verify`
 - `npm run smoke:admin-data`

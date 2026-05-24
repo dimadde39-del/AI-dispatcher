@@ -2,6 +2,9 @@
 
 ## 2026-05-24
 
+- Added Vapi assistant behavior test scripts: a local Russian-first RU/KZ dispatcher policy checklist
+  that does not call Vapi, plus an optional Vapi Chat runner that skips cleanly without API key or
+  when Vapi returns the billing/payment `402` gate.
 - Prepared the project for the first real Vapi end-of-call-report test: added the exact deployed
   Vapi Server URL docs, shared-secret auth setup guidance, a concise Russian dispatcher prompt,
   safe live readiness/checklist scripts, and a recent Vapi calls helper that avoids sensitive fields.

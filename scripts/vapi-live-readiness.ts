@@ -4,7 +4,7 @@ import { loadEnvFiles } from "./load-env";
 const PUBLIC_APP_URL = "https://ai-dispatcher-chi.vercel.app";
 const VAPI_WEBHOOK_PATH = "/api/webhooks/vapi";
 const VAPI_SERVER_URL = `${PUBLIC_APP_URL}${VAPI_WEBHOOK_PATH}`;
-const CURRENT_SCRIPTS_CALL_VAPI_API = false;
+const OPTIONAL_SCRIPTS_CALL_VAPI_API = true;
 
 function isPresent(value: string | undefined): boolean {
   return Boolean(value?.trim());
@@ -48,9 +48,9 @@ console.log(`- Derived webhook URL: ${derivedWebhookUrl ?? "unavailable"}`);
 console.log(`- Webhook secret header: ${VAPI_WEBHOOK_SECRET_HEADER}`);
 console.log(`- VAPI_WEBHOOK_SECRET present: ${webhookSecretPresent ? "yes" : "no"}`);
 console.log(`- Webhook verification configured: ${isVapiWebhookVerificationConfigured() ? "yes" : "no"}`);
-console.log(`- Current scripts call Vapi API directly: ${CURRENT_SCRIPTS_CALL_VAPI_API ? "yes" : "no"}`);
+console.log(`- Optional scripts call Vapi API directly: ${OPTIONAL_SCRIPTS_CALL_VAPI_API ? "yes" : "no"}`);
 
-if (CURRENT_SCRIPTS_CALL_VAPI_API) {
+if (OPTIONAL_SCRIPTS_CALL_VAPI_API) {
   console.log(`- VAPI_API_KEY present: ${isPresent(process.env.VAPI_API_KEY) ? "yes" : "no"}`);
 } else {
   console.log("- VAPI_API_KEY required for these local live-test scripts: no");
@@ -72,6 +72,10 @@ if (!webhookSecretPresent) {
   console.warn(
     "- Warning: VAPI_WEBHOOK_SECRET is missing. Production Vapi webhooks fail closed without it in the current verifier.",
   );
+}
+
+if (!isPresent(process.env.VAPI_API_KEY)) {
+  console.warn("- Warning: VAPI_API_KEY is missing. This only blocks optional npm run vapi:chat-tests.");
 }
 
 console.warn(
