@@ -317,7 +317,7 @@ cd services/voice-agent
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001 --env-file .env
 ```
 
 The Python service is not production-ready and has no SIP/PSTN integration yet.
