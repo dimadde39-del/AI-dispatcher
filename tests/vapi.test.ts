@@ -497,6 +497,8 @@ test("handleCallEnded creates a call, lead, call event, and Telegram message wit
 
   assert.equal(result.callId, callId);
   assert.equal(result.leadId, leadId);
+  assert.equal(result.confidence, "medium");
+  assert.equal(result.requiresCallback, false);
   assert.equal(state.calls[0]?.status, "PROCESSED");
   assert.equal(state.calls[0]?.provider, "vapi");
   assert.equal(state.calls[0]?.providerCallId, "vapi-call-fixture-1");
@@ -531,6 +533,8 @@ test("handleCallEnded marks empty self-host transcript as no lead when there is 
 
   assert.equal(result.ignored, true);
   assert.equal(result.reason, "EMPTY_TRANSCRIPT_NO_USEFUL_SIGNAL");
+  assert.equal(result.confidence, "unusable");
+  assert.equal(result.requiresCallback, true);
   assert.equal(state.calls[0]?.status, "NO_LEAD");
   assert.equal(state.leads.length, 0);
   assert.deepEqual(sentLeadIds, []);
@@ -559,6 +563,8 @@ test("handleCallEnded creates callback-required lead for low-confidence self-hos
   });
 
   assert.equal(result.leadId, leadId);
+  assert.equal(result.confidence, "low");
+  assert.equal(result.requiresCallback, true);
   assert.equal(state.calls[0]?.status, "PROCESSED");
   assert.equal(state.leads[0]?.status, "CALLBACK_PENDING");
   assert.equal(state.leads[0]?.aiScore, "COLD");

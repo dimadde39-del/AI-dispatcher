@@ -29,6 +29,8 @@ export interface HandleVoiceEventResult {
   callId?: string;
   leadId?: string;
   telegramMessageId?: string;
+  confidence?: string | null;
+  requiresCallback?: boolean;
   ignored?: boolean;
   reason?: string;
 }
@@ -377,6 +379,8 @@ export async function handleCallEnded(
       ok: true,
       eventType: event.type,
       callId: noLeadCall.id,
+      confidence: confidenceDecision.confidence,
+      requiresCallback: confidenceDecision.callbackRequired,
       ignored: true,
       reason: confidenceDecision.reason,
     };
@@ -447,6 +451,8 @@ export async function handleCallEnded(
     callId: processedCall.id,
     leadId: lead.id,
     telegramMessageId,
+    confidence: confidenceDecision.confidence,
+    requiresCallback: confidenceDecision.callbackRequired,
   };
 }
 

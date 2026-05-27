@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import {
+  buildDryRunPayloadSummary,
+  buildSelfHostTranscriptEmitEvents,
+  MANUAL_TRANSCRIPT_SCENARIOS,
+  safeWebhookResultFromResponse,
+} from "../scripts/self-host-emit-transcript";
 import { buildSelfHostSimulationEvents } from "../scripts/self-host-voice-simulate";
 import {
   parseSelfHostVoiceEventPayload,
@@ -118,6 +124,74 @@ test("Self-host simulation scenarios build normalized call-end reports", () => {
     assert.equal(Boolean(parsedEndEvent.transcript), true);
     assert.equal(Boolean(parsedEndEvent.summary), true);
   }
+});
+
+test("Self-host transcript emitter dry-run summary exposes payload shape only", () => {
+  const events = buildSelfHostTranscriptEmitEvents({
+    transcript: MANUAL_TRANSCRIPT_SCENARIOS["noisy-ru"].transcript,
+    timestampMs: 1_779_912_000_000,
+    startedAt: "2026-05-28T10:00:00.000Z",
+    aiNumber: "+77273330001",
+  });
+
+  const summary = buildDryRunPayloadSummary(
+    "http://localhost:3000/api/webhooks/self-host-voice?token=secret-value",
+    "noisy-ru",
+    events,
+  );
+
+  assert.equal(summary.providerCallId, "selfhost-manual-1779912000000");
+  assert.equal(summary.eventCount, 3);
+  assert.deepEqual(
+    summary.events.map((event) => event.normalizedEventType),
+    ["CALL_STARTED", "TRANSCRIPT_UPDATED", "CALL_ENDED"],
+  );
+  assert.deepEqual(
+    summary.events.map((event) => event.payloadType),
+    ["call_started", "transcript_updated", "call_ended"],
+  );
+  assert.equal(summary.events[0]?.hasTranscript, false);
+  assert.equal(summary.events[1]?.hasTranscript, true);
+  assert.equal(summary.events[2]?.hasTranscript, true);
+  assert.equal(summary.events[1]?.transcriptLength, MANUAL_TRANSCRIPT_SCENARIOS["noisy-ru"].transcript.length);
+  assert.doesNotMatch(JSON.stringify(summary), /secret-value/u);
+  assert.doesNotMatch(JSON.stringify(summary), /здраст/u);
+});
+
+test("Self-host transcript emitter predefined noisy scenarios exist", () => {
+  assert.equal(
+    MANUAL_TRANSCRIPT_SCENARIOS["noisy-ru"].transcript,
+    "здрастпшпшпшуйте менщщавзщвя течь да ебанный кранладыоаыд да заткни ты этого ребенка опадвпл вы меня слышыте алвл",
+  );
+  assert.equal(
+    MANUAL_TRANSCRIPT_SCENARIOS.background.transcript,
+    "Жена: алло вы сантехник можете к нам приехать? Муж под краном орет: ну ебта ты звонишь там давай по быстрее. Жена: да да говорю уже, так на чем я остановилась, адрес да?",
+  );
+  assert.equal(
+    MANUAL_TRANSCRIPT_SCENARIOS.gas.transcript,
+    "алло пахнет газом дома ребенок орет я не знаю что делать",
+  );
+});
+
+test("Self-host transcript emitter printable results do not include secrets", () => {
+  const result = safeWebhookResultFromResponse("CALL_ENDED", 200, {
+    ok: true,
+    callId: "call-123",
+    leadId: "lead-456",
+    confidence: "low",
+    requiresCallback: true,
+    SELF_HOST_VOICE_WEBHOOK_SECRET: "secret-value",
+    token: "secret-value",
+  });
+
+  const printed = JSON.stringify(result);
+  assert.equal(result.status, "ok");
+  assert.equal(result.callId, "call-123");
+  assert.equal(result.leadId, "lead-456");
+  assert.equal(result.confidence, "low");
+  assert.equal(result.requiresCallback, true);
+  assert.doesNotMatch(printed, /secret-value/u);
+  assert.doesNotMatch(printed, /SELF_HOST_VOICE_WEBHOOK_SECRET/u);
 });
 
 test("Self-host webhook verifier accepts only the configured header secret", async () => {

@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
       eventType: result.eventType,
       callId: result.callId,
       leadId: result.leadId,
+      confidence: result.confidence,
+      requiresCallback: result.requiresCallback,
       ignored: result.ignored ?? false,
       reason: result.reason,
     });
