@@ -44,8 +44,16 @@ Client WhatsApp/SMS notifications are deferred. Telegram is for the master inter
 ⏰ Время звонка: {call started time or lead created time}
 🔥 AI-Оценка: {aiScore label}
 
-💬 Кратко:
+💬 AI-выжимка:
 {aiSummary}
+```
+
+Callback-required or noisy self-host transcript cards also include:
+
+```text
+⚠️ Распознавание слабое. Нужно перезвонить клиенту для уточнения.
+Не хватает: адрес, имя
+На фоне были посторонние реплики; выжимка может быть неточной.
 ```
 
 If `safetyFlag` is not `NONE`, the card includes:

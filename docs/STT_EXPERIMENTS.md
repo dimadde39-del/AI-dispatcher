@@ -3,7 +3,7 @@
 This is a manual quality experiment for Kazakhstan RU/KZ/MIX caller audio. It is not production,
 does not add LLM, does not add TTS, and does not replace Vapi.
 
-Decision gate: choose the STT mode before starting any self-host LLM/TTS response loop.
+Decision gate: choose the STT mode before starting any realtime self-host response LLM/TTS loop.
 
 ## Modes
 
@@ -186,6 +186,21 @@ Downstream lead handling must not create a confident normal lead from low-confid
 Weak but useful calls become `CALLBACK_PENDING`; empty calls without useful signal or caller phone
 are logged as `NO_LEAD`.
 
+## Noisy Transcript Cleanup
+
+Real call transcripts are expected to contain noise, side conversations, profanity, repeated
+"алло / вы слышите", and RU/KZ mixed fragments. STT scoring only measures the transcript quality;
+lead quality now depends on a separate transcript-to-structured-lead layer.
+
+The self-host webhook path runs deterministic safety hints first, then an optional strict JSON LLM
+extractor. The extractor removes filler/background chatter, keeps useful details even when someone
+nearby says them, and returns `LeadExtractionResult` with `summaryRu`, missing fields,
+`transcriptQuality`, `confidence`, `requiresCallback`, background/profanity flags, and warnings.
+
+Low confidence is a routing state, not an automatic discard. Useful but noisy calls become
+callback-required incomplete leads. Only empty/unusable transcripts without useful signal and without
+caller phone should become `NO_LEAD`.
+
 ## Next Research
 
 Evaluate alternative RU/KZ-capable STT before production self-host automation:
@@ -199,6 +214,7 @@ Evaluate alternative RU/KZ-capable STT before production self-host automation:
 ## Next Gate
 
 After local mock emit and file/recording STT pass, pick one STT mode, document why, and only then
-start the self-host LLM/TTS loop. Real phone number testing comes after the local STT pipeline works.
+start the realtime self-host response LLM/TTS loop. Real phone number testing comes after the local
+STT plus extraction pipeline works.
 Vapi remains the fallback until the self-host path beats it on RU/KZ call quality and operational
 reliability.

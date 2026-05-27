@@ -278,16 +278,16 @@ test("buildTelegramLeadCardMessage formats a Russian lead card with buttons", ()
     master: makeMaster(),
   });
 
-  assert.match(message.text, /🚨 НОВЫЙ ПРОПУЩЕННЫЙ ЗВОНОК/);
-  assert.match(message.text, /👤 Клиент: Demo Client/);
-  assert.match(message.text, /📞 Телефон: \+7 700 765 43 21/);
-  assert.match(message.text, /🛠 Проблема: Течет труба под ванной/);
-  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/);
-  assert.doesNotMatch(message.text, /⏰ Время:/);
-  assert.match(message.text, /🔥 AI-Оценка: Горячий/);
-  assert.match(message.text, new RegExp(russianDemoSummary));
-  assert.doesNotMatch(message.text, /Client reports/);
-  assert.doesNotMatch(message.text, /Позвонить:/);
+  assert.match(message.text, /🚨 НОВЫЙ ПРОПУЩЕННЫЙ ЗВОНОК/u);
+  assert.match(message.text, /👤 Клиент: Demo Client/u);
+  assert.match(message.text, /📞 Телефон: \+7 700 765 43 21/u);
+  assert.match(message.text, /🛠 Проблема: Течет труба под ванной/u);
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/u);
+  assert.doesNotMatch(message.text, /⏰ Время:/u);
+  assert.match(message.text, /🔥 AI-Оценка: Горячий/u);
+  assert.match(message.text, new RegExp(russianDemoSummary, "u"));
+  assert.doesNotMatch(message.text, /Client reports/u);
+  assert.doesNotMatch(message.text, /Позвонить:/u);
   assert.equal((message.text.match(/\+7 700 765 43 21/g) ?? []).length, 1);
   assert.equal(message.replyMarkup?.inline_keyboard[0]?.[0]?.callback_data, `lead:accept:${lead.id}`);
   assert.equal(message.replyMarkup?.inline_keyboard[0]?.[1]?.callback_data, `lead:spam:${lead.id}`);
@@ -305,10 +305,10 @@ test("buildTelegramLeadCardMessage uses fallbacks and safety warning", () => {
     master: makeMaster(),
   });
 
-  assert.match(message.text, /👤 Клиент: Не указано/);
-  assert.match(message.text, /📞 Телефон: Не указан/);
-  assert.match(message.text, /📍 Адрес: Не указан/);
-  assert.match(message.text, /⚠️ ВАЖНО: возможная опасная ситуация/);
+  assert.match(message.text, /👤 Клиент: Не указано/u);
+  assert.match(message.text, /📞 Телефон: Не указан/u);
+  assert.match(message.text, /📍 Адрес: Не указан/u);
+  assert.match(message.text, /⚠️ ВАЖНО: возможная опасная ситуация/u);
   assert.equal(message.replyMarkup?.inline_keyboard.length, 1);
 });
 
@@ -317,22 +317,28 @@ test("buildTelegramLeadCardMessage warns on callback-required low-confidence lea
     lead: makeLead({
       customerName: null,
       address: null,
-      problem: "Распознавание слабое. Нужно перезвонить клиенту.",
+      problem: "Протечка воды или проблема с краном",
       status: "CALLBACK_PENDING",
     }),
     master: makeMaster(),
     call: makeCall({
       rawPayload: {
-        warnings: ["low_confidence", "safety_low_confidence"],
+        leadExtraction: {
+          confidence: "low",
+          transcriptQuality: "very_noisy",
+          requiresCallback: true,
+          missingFields: ["address", "customerName"],
+          backgroundSpeechDetected: true,
+          warnings: ["noisy_transcript", "missing_fields"],
+        },
       },
     }),
   });
 
-  assert.match(message.text, /⚠️ Распознавание слабое\. Нужно перезвонить клиенту\./u);
-  assert.match(message.text, /problem unclear/u);
-  assert.match(message.text, /address missing/u);
-  assert.match(message.text, /name missing/u);
-  assert.match(message.text, /safety unclear if relevant/u);
+  assert.match(message.text, /⚠️ Распознавание слабое\. Нужно перезвонить клиенту для уточнения\./u);
+  assert.match(message.text, /Не хватает: адрес, имя/u);
+  assert.match(message.text, /На фоне были посторонние реплики; выжимка может быть неточной\./u);
+  assert.match(message.text, /💬 AI-выжимка:/u);
 });
 
 test("buildTelegramLeadCardMessage prefers call started time over lead created time", () => {
@@ -346,7 +352,7 @@ test("buildTelegramLeadCardMessage prefers call started time over lead created t
     }),
   });
 
-  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 06:00/);
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 06:00/u);
 });
 
 test("buildTelegramLeadCardMessage falls back to lead created time when call time is missing", () => {
@@ -360,7 +366,7 @@ test("buildTelegramLeadCardMessage falls back to lead created time when call tim
     }),
   });
 
-  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/);
+  assert.match(message.text, /⏰ Время звонка: 23\.05\.2026, 05:00/u);
 });
 
 test("parseTelegramLeadCallbackData handles compact lead callback data", () => {

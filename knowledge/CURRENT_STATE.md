@@ -3,8 +3,9 @@
 ## Phase
 
 Current phase: self-host STT language-routing experiment has produced an initial manual decision:
-use `deepgram-ru-nova2` as the MVP default while researching better KZ and mixed RU/KZ STT before any
-LLM/TTS loop.
+use `deepgram-ru-nova2` as the MVP default while researching better KZ and mixed RU/KZ STT. A
+noise-aware transcript-to-lead LLM extraction layer now exists for cleanup and Telegram summaries,
+but the self-host realtime LLM response loop and TTS remain deferred.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -180,7 +181,23 @@ The product sells saved orders, not an "AI bot".
   calls become `CALLBACK_PENDING` leads with a Telegram callback warning, while empty calls without
   useful signal or caller phone are logged as `NO_LEAD`.
 - `docs/STT_EXPERIMENTS.md` defines recording steps, mode comparison, pass/fail rules, and the next
-  gate to choose STT before adding self-host LLM/TTS.
+  gate to choose STT before adding a realtime self-host response LLM/TTS loop.
+
+## Implemented Noise-Aware Lead Extraction
+
+- `LeadExtractionResult` is a strict Zod schema for structured transcript cleanup: problem, address,
+  district, customer name, urgency, safety flag, Russian summary, transcript quality, confidence,
+  callback requirement, missing fields, background speech, profanity, useful quotes, and warnings.
+- Self-host call-end handling now runs deterministic extraction first, then an optional LLM extractor
+  provider boundary (`mock`, `deepseek`, or `openai`) before lead creation.
+- Deterministic safety hints can override weaker LLM output; low STT score, empty transcript, noisy
+  quality, missing fields, and safety uncertainty lower confidence and require callback.
+- The mock extractor handles clean RU, very noisy RU, spouse/background speech, hello-only noise, and
+  noisy gas examples without calling real LLM providers.
+- Telegram lead cards show `AI-выжимка`, low-recognition warnings, missing fields, and a background
+  speech caveat when the extraction is noisy or callback-required.
+- Low confidence is not an automatic discard: useful signal or a caller phone creates an incomplete
+  `CALLBACK_PENDING` lead; empty/unusable calls with no useful signal and no phone become `NO_LEAD`.
 
 ## Vapi Live Test Preparation
 
@@ -231,4 +248,4 @@ The product sells saved orders, not an "AI bot".
 Research alternative STT providers for Kazakh and RU/KZ code switching: Google Speech-to-Text, Azure
 Speech, Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable STT. Keep Vapi
 available as the fallback while the self-host spike proves RU/KZ quality; real phone number testing
-comes after the local STT pipeline works.
+comes after the local STT plus extraction pipeline works.

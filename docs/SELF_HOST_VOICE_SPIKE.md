@@ -177,6 +177,36 @@ Low-confidence behavior is required before any self-host production use:
 - Low-confidence self-host call-end events create only `CALLBACK_PENDING` leads when there is useful
   signal or a caller phone; empty calls without useful signal become `NO_LEAD`.
 
+## Noise-Aware Lead Extraction
+
+Self-host STT output is expected to be messy in real calls: unclear words, background family speech,
+profanity, repeated "алло / вы слышите", partial phrases, and mixed RU/KZ fragments. The backend now
+keeps deterministic extraction as a safety/fallback layer, then optionally runs a strict JSON LLM
+lead extractor:
+
+```text
+raw transcript
+-> deterministic safety hints
+-> LLM cleanup/extraction
+-> LeadExtractionResult
+-> lead creation and Telegram card
+```
+
+Configure the extractor with:
+
+```bash
+LEAD_EXTRACTOR_PROVIDER=mock
+LEAD_EXTRACTOR_MODEL=deepseek-chat
+```
+
+`mock` is local and test-safe. `deepseek` and `openai` are optional provider boundaries and require
+their API keys before they are used. Tests must not call real providers.
+
+Low confidence does not mean the call is thrown away. If the transcript contains a useful problem or
+there is a caller phone, the system creates an incomplete `CALLBACK_PENDING` lead and the Telegram
+card shows "AI-выжимка", missing fields, and a warning to call the client back. Only empty/unusable
+calls with no useful signal and no caller phone become `NO_LEAD`.
+
 `npm run vapi:recent` is not relevant for self-host calls. Verify self-host output through:
 
 - `/admin/calls`
@@ -186,4 +216,5 @@ Low-confidence behavior is required before any self-host production use:
 
 Detailed manual experiment steps and observed score tables are in `docs/STT_EXPERIMENTS.md`. Next
 research should compare Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex
-SpeechKit if viable, and other Kazakh-capable STT before adding any self-host LLM/TTS loop.
+SpeechKit if viable, and other Kazakh-capable STT before adding any realtime self-host response
+LLM/TTS loop.

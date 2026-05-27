@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { handleVoiceEvent } from "@/application";
 import { createSupabaseRepositoryContext } from "@/infrastructure/db";
+import { createLeadExtractorFromEnv } from "@/infrastructure/llm";
 import { createTelegramMasterInterface, hasTelegramBotToken } from "@/infrastructure/telegram";
 import {
   createSelfHostVoiceProvider,
   verifySelfHostVoiceWebhookSecret,
 } from "@/infrastructure/voice/self-host";
+import { getServerEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,9 @@ export async function POST(request: NextRequest) {
 
     const repositories = createSupabaseRepositoryContext();
     const masterInterface = hasTelegramBotToken() ? createTelegramMasterInterface() : undefined;
+    const leadExtractor = createLeadExtractorFromEnv(getServerEnv());
     const result = await handleVoiceEvent(repositories, event, {
+      leadExtractor,
       masterInterface,
     });
 

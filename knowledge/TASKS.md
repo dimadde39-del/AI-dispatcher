@@ -13,9 +13,9 @@
 
 ## Current Task
 
-Research and improve Kazakh plus mixed RU/KZ STT after the manual Deepgram experiment. Keep
-`deepgram-ru-nova2` as the MVP RU default, and do not add the self-host LLM/TTS loop until KZ/MIX and
-safety confidence have a better provider path.
+Validate noisy transcript lead extraction on more synthetic RU/KZ calls. Keep `deepgram-ru-nova2` as
+the MVP RU STT default, research better KZ/MIX STT, and do not add the self-host realtime response
+LLM/TTS loop until STT and extraction quality are proven.
 
 ## Done
 
@@ -76,6 +76,10 @@ safety confidence have a better provider path.
   low-confidence thresholds are explicit, `/dev/selfhost-stt` keeps result history/export and best
   usable mode recommendations, and self-host low-confidence calls become callback-required or
   `NO_LEAD` instead of confident normal leads.
+- Noise-aware LLM lead extraction: strict `LeadExtractionResult` schema, mock/deepseek/openai
+  provider boundary, strict Russian JSON prompt, deterministic-plus-LLM merge, Telegram
+  `AI-выжимка` warning behavior, and fixtures/tests for clean, noisy, background, hello-only, and gas
+  transcripts.
 
 ## Not Started Yet
 
@@ -83,9 +87,9 @@ safety confidence have a better provider path.
 - Billing.
 - Live Vapi assistant/phone number configuration.
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
-- Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
 - Alternative STT provider research for Kazakh and mixed RU/KZ: Google Speech-to-Text, Azure Speech,
   Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable STT.
-- Self-host LLM and TTS response loop.
+- Real provider evaluation for LLM lead extraction with synthetic noisy recordings.
+- Self-host realtime response LLM and TTS loop.
 - Self-host SIP/PSTN integration.

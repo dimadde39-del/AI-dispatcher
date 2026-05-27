@@ -2,6 +2,11 @@
 
 ## 2026-05-27
 
+- Added noise-aware LLM lead extraction for self-host voice transcripts: strict
+  `LeadExtractionResult`, mock/deepseek/openai extractor boundary, Russian JSON-only prompt,
+  deterministic safety merge, callback-required low-confidence policy, and Telegram `AI-выжимка`
+  warnings with missing fields/background-speech caveat. Added fixtures/tests for clean RU, very
+  noisy RU, spouse/background speech, hello-only noise, and noisy gas.
 - Tuned self-host STT based on manual Deepgram results: `deepgram-ru-nova2` is now the MVP default,
   RU worked best, KZ/MIX is not production-ready, and gas/safety confidence is insufficient for
   confident automation. Empty `/stt/experiment` transcripts now return safe scored HTTP 200 results,

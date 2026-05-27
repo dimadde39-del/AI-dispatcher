@@ -1,6 +1,7 @@
 import type { CreateLeadInput, JsonValue, LeadStatus } from "@/domain";
 import type { VoiceCallEndedEvent } from "@/interfaces/voice-event";
 import { UNKNOWN_PROBLEM, type ExtractedLeadFromVoiceEvent } from "./extract-lead-from-voice-event";
+import type { LeadExtractionResult } from "./lead-extraction-result";
 
 export interface LeadConfidenceDecision {
   shouldCreateLead: boolean;
@@ -97,7 +98,27 @@ function hasUsefulSignal(event: VoiceCallEndedEvent): boolean {
   return Boolean(compact(event.transcript) || compact(event.summary));
 }
 
-export function isLowConfidenceVoiceEvent(event: VoiceCallEndedEvent): boolean {
+function hasUsefulExtractionSignal(extractionResult: LeadExtractionResult | undefined): boolean {
+  if (!extractionResult) {
+    return false;
+  }
+
+  return Boolean(
+    compact(extractionResult.problem) ||
+      compact(extractionResult.address) ||
+      compact(extractionResult.district) ||
+      extractionResult.safetyFlag === "GAS" ||
+      extractionResult.safetyFlag === "FIRE" ||
+      extractionResult.safetyFlag === "ELECTRIC_DANGER" ||
+      extractionResult.safetyFlag === "WATER_LEAK" ||
+      extractionResult.rawUsefulQuotes.length > 0,
+  );
+}
+
+export function isLowConfidenceVoiceEvent(
+  event: VoiceCallEndedEvent,
+  extractionResult?: LeadExtractionResult,
+): boolean {
   const warnings = rawWarnings(event);
   const confidence = rawString(event, ["confidence"]);
   const usable = rawBoolean(event, ["usable"]);
@@ -106,6 +127,13 @@ export function isLowConfidenceVoiceEvent(event: VoiceCallEndedEvent): boolean {
 
   return (
     !hasUsefulSignal(event) ||
+    extractionResult?.confidence === "low" ||
+    extractionResult?.confidence === "unusable" ||
+    extractionResult?.transcriptQuality === "noisy" ||
+    extractionResult?.transcriptQuality === "very_noisy" ||
+    extractionResult?.transcriptQuality === "empty" ||
+    extractionResult?.requiresCallback === true ||
+    extractionResult?.warnings.includes("no_useful_request") === true ||
     confidence === "low" ||
     confidence === "unusable" ||
     usable === false ||
@@ -120,15 +148,16 @@ export function isLowConfidenceVoiceEvent(event: VoiceCallEndedEvent): boolean {
 export function decideLeadConfidence(
   event: VoiceCallEndedEvent,
   extractedLead: ExtractedLeadFromVoiceEvent,
+  extractionResult?: LeadExtractionResult,
 ): LeadConfidenceDecision {
-  const warnings = rawWarnings(event);
-  const confidence = rawString(event, ["confidence"]);
-  const usable = rawBoolean(event, ["usable"]);
+  const warnings = [...new Set([...rawWarnings(event), ...(extractionResult?.warnings ?? [])])];
+  const confidence = extractionResult?.confidence ?? rawString(event, ["confidence"]);
+  const usable = extractionResult ? extractionResult.confidence !== "unusable" : rawBoolean(event, ["usable"]);
   const score = rawNumber(event, ["score"]);
-  const callbackRequired = isLowConfidenceVoiceEvent(event);
-  const usefulSignal = hasUsefulSignal(event);
+  const callbackRequired = isLowConfidenceVoiceEvent(event, extractionResult);
+  const usefulSignal = hasUsefulSignal(event) && (extractionResult ? hasUsefulExtractionSignal(extractionResult) : true);
   const callerPhoneExists = Boolean(compact(event.customerPhone));
-  const missingFields = missingFieldsFor(event, extractedLead, warnings);
+  const missingFields = extractionResult?.missingFields ?? missingFieldsFor(event, extractedLead, warnings);
 
   if (callbackRequired && !usefulSignal && !callerPhoneExists) {
     return {
@@ -168,13 +197,12 @@ export function leadInputForConfidence(
     };
   }
 
-  const summaryPrefix = "⚠️ Распознавание слабое. Нужно перезвонить клиенту.";
   const sourceSummary = compact(input.aiSummary);
 
   return {
     ...input,
     problem: problemIsUnclear(input) ? CALLBACK_PROBLEM : input.problem,
-    aiSummary: sourceSummary ? `${summaryPrefix} ${sourceSummary}` : CALLBACK_SUMMARY,
+    aiSummary: sourceSummary || CALLBACK_SUMMARY,
     aiScore: input.aiScore === "SPAM" ? "SPAM" : "COLD",
     status,
   };

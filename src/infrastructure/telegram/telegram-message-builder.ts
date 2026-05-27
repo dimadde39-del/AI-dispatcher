@@ -63,39 +63,84 @@ function statusLine(status: TelegramLeadCardStatus | undefined): string | null {
 
 function rawWarnings(call: Call | null | undefined): string[] {
   const root = asRecord(call?.rawPayload);
+  const extraction = asRecord(root?.leadExtraction);
   const stt = asRecord(root?.stt) ?? asRecord(root?.sttResult) ?? asRecord(root?.stt_result);
+  const extractionWarnings = extraction?.warnings;
   const value = stt?.warnings ?? root?.warnings;
 
-  if (!Array.isArray(value)) {
-    return [];
-  }
+  const warnings = [
+    ...(Array.isArray(extractionWarnings) ? extractionWarnings : []),
+    ...(Array.isArray(value) ? value : []),
+  ];
 
-  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+  return warnings.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function leadExtractionRecord(call: Call | null | undefined): Record<string, unknown> | null {
+  return asRecord(asRecord(call?.rawPayload)?.leadExtraction);
 }
 
 function problemUnclear(lead: Lead): boolean {
   const problem = lead.problem.toLocaleLowerCase("ru");
-  return problem.includes("не удалось определить") || problem.includes("распознавание слабое");
+  return (
+    problem.includes("не удалось определить") ||
+    problem.includes("распознавание слабое") ||
+    problem.includes("РЅРµ СѓРґР°Р»РѕСЃСЊ РѕРїСЂРµРґРµР»РёС‚СЊ") ||
+    problem.includes("СЂР°СЃРїРѕР·РЅР°РІР°РЅРёРµ СЃР»Р°Р±РѕРµ")
+  );
+}
+
+function missingFieldLabel(field: string): string {
+  const labels: Record<string, string> = {
+    problem: "проблема",
+    address: "адрес",
+    customerName: "имя",
+    urgency: "срочность",
+  };
+
+  return labels[field] ?? field;
 }
 
 function callbackMissingFields(lead: Lead, call: Call | null | undefined): string[] {
-  const missing: string[] = [];
+  const extraction = leadExtractionRecord(call);
+  const extractionMissing = extraction?.missingFields;
+  const missing: string[] = Array.isArray(extractionMissing)
+    ? extractionMissing.filter((item): item is string => typeof item === "string")
+    : [];
   const warnings = rawWarnings(call);
 
   if (problemUnclear(lead)) {
-    missing.push("problem unclear");
+    missing.push("problem");
   }
   if (!lead.address?.trim()) {
-    missing.push("address missing");
+    missing.push("address");
   }
   if (!lead.customerName?.trim()) {
-    missing.push("name missing");
+    missing.push("customerName");
   }
   if (warnings.includes("safety_low_confidence")) {
-    missing.push("safety unclear if relevant");
+    missing.push("urgency");
   }
 
-  return missing;
+  return [...new Set(missing)].map(missingFieldLabel);
+}
+
+function shouldShowRecognitionWarning(lead: Lead, call: Call | null | undefined): boolean {
+  const extraction = leadExtractionRecord(call);
+  const confidence = extraction?.confidence;
+  const quality = extraction?.transcriptQuality;
+  return (
+    lead.status === "CALLBACK_PENDING" ||
+    extraction?.requiresCallback === true ||
+    confidence === "low" ||
+    confidence === "unusable" ||
+    quality === "noisy" ||
+    quality === "very_noisy"
+  );
+}
+
+function backgroundSpeechDetected(call: Call | null | undefined): boolean {
+  return leadExtractionRecord(call)?.backgroundSpeechDetected === true;
 }
 
 function buildKeyboard(input: TelegramLeadCardInput): TelegramInlineKeyboardMarkup | undefined {
@@ -137,12 +182,16 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
     `🔥 AI-Оценка: ${aiScoreLabels[lead.aiScore]}`,
   ];
 
-  if (lead.status === "CALLBACK_PENDING") {
+  if (shouldShowRecognitionWarning(lead, call)) {
     const missingFields = callbackMissingFields(lead, call);
-    lines.push("", "⚠️ Распознавание слабое. Нужно перезвонить клиенту.");
+    lines.push("", "⚠️ Распознавание слабое. Нужно перезвонить клиенту для уточнения.");
 
     if (missingFields.length > 0) {
       lines.push(`Не хватает: ${missingFields.join(", ")}`);
+    }
+
+    if (backgroundSpeechDetected(call)) {
+      lines.push("На фоне были посторонние реплики; выжимка может быть неточной.");
     }
   }
 
@@ -153,7 +202,7 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
     );
   }
 
-  lines.push("", "💬 Кратко:", lead.aiSummary);
+  lines.push("", "💬 AI-выжимка:", lead.aiSummary);
 
   const currentStatusLine = statusLine(input.status);
   if (currentStatusLine) {

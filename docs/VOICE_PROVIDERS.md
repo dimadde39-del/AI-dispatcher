@@ -154,16 +154,25 @@ fallbacks before a live pilot:
 
 ## Lead Extraction
 
-The first foundation uses deterministic extraction from the end-of-call report:
+The voice pipeline now keeps deterministic extraction and adds an optional noise-aware LLM extractor:
 
-- Summary first, then transcript fallback.
-- Simple address heuristics.
-- Emergency flags for gas, fire, or dangerous electric situations.
-- High urgency for urgent leak/burst/fridge/lockout patterns.
-- No LLM extraction yet.
+```text
+raw transcript
+-> deterministic safety hints
+-> LLM cleanup/extraction
+-> LeadExtractionResult
+-> lead creation and Telegram card
+```
 
-Future work should replace this with a strict JSON LLM extractor validated by Zod, while preserving
-the deterministic fallback.
+Deterministic extraction remains the fallback and safety hint source. The LLM boundary lives under
+`src/infrastructure/llm/lead-extractor/`, returns strict Zod-validated JSON, and can be configured
+with `LEAD_EXTRACTOR_PROVIDER=mock|deepseek|openai`. `mock` is local and should be used in tests.
+
+The extractor is specifically for noisy real transcripts: background speech, profanity, repeated
+"алло", partial phrases, and RU/KZ mixed fragments. It must not invent address, name, price, or exact
+arrival time. Low-confidence useful calls become callback-required incomplete leads instead of
+confident normal leads; empty/unusable calls with no useful signal and no caller phone become
+`NO_LEAD`.
 
 ## Application Responsibilities
 

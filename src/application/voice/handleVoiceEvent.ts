@@ -9,12 +9,17 @@ import type {
   VoiceEvent,
   VoiceTranscriptUpdatedEvent,
 } from "@/interfaces/voice-event";
+import type { LeadExtractorPort } from "./lead-extraction-result";
 import { decideLeadConfidence, leadInputForConfidence } from "./lead-confidence-policy";
-import { extractLeadFromVoiceEvent } from "./extract-lead-from-voice-event";
+import {
+  extractLeadWithNoiseAwareness,
+  rawPayloadWithLeadExtraction,
+} from "./noise-aware-lead-extraction";
 import { resolveMasterForVoiceEvent, type MasterResolutionResult } from "./resolve-master-for-voice-event";
 
 export interface HandleVoiceEventOptions {
   masterInterface?: MasterInterfacePort;
+  leadExtractor?: LeadExtractorPort;
   sendTelegramLeadCard?: boolean;
 }
 
@@ -341,12 +346,16 @@ export async function handleCallEnded(
   }
 
   const existingLead = await repositories.leads.findByCallId(call.id);
-  const extractedLead = extractLeadFromVoiceEvent(event);
-  const confidenceDecision = decideLeadConfidence(event, extractedLead);
+  const extraction = await extractLeadWithNoiseAwareness(event, options.leadExtractor);
+  const extractedLead = extraction.lead;
+  const enrichedRawPayload = rawPayloadWithLeadExtraction(event.rawPayload, extraction);
+  const confidenceDecision = decideLeadConfidence(event, extractedLead, extraction.result);
 
   if (!existingLead && !confidenceDecision.shouldCreateLead) {
     const noLeadCall =
-      call.status === "NO_LEAD" ? call : await repositories.calls.update(call.id, { status: "NO_LEAD" });
+      call.status === "NO_LEAD"
+        ? await repositories.calls.update(call.id, { rawPayload: enrichedRawPayload })
+        : await repositories.calls.update(call.id, { status: "NO_LEAD", rawPayload: enrichedRawPayload });
     await recordAudit(repositories, {
       eventType: "VOICE_CALL_ENDED_NO_LEAD",
       entityType: "call",
@@ -360,6 +369,7 @@ export async function handleCallEnded(
         confidence: confidenceDecision.confidence,
         usable: confidenceDecision.usable,
         score: confidenceDecision.score,
+        leadExtraction: extraction.result,
       },
     });
 
@@ -385,7 +395,10 @@ export async function handleCallEnded(
       ),
     }));
 
-  const processedCall = call.status === "PROCESSED" ? call : await repositories.calls.update(call.id, { status: "PROCESSED" });
+  const processedCall = await repositories.calls.update(call.id, {
+    status: "PROCESSED",
+    rawPayload: enrichedRawPayload,
+  });
   const telegramMessageId = await sendLeadCardIfReady(
     repositories,
     options.masterInterface,
@@ -410,6 +423,7 @@ export async function handleCallEnded(
       confidence: confidenceDecision.confidence,
       usable: confidenceDecision.usable,
       score: confidenceDecision.score,
+      leadExtractionProvider: extraction.providerName,
     },
   });
 
@@ -423,6 +437,7 @@ export async function handleCallEnded(
       provider: event.provider,
       requiresCallback: confidenceDecision.callbackRequired,
       missingFields: confidenceDecision.missingFields,
+      leadExtractionProvider: extraction.providerName,
     },
   });
 
