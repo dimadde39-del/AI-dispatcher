@@ -27,6 +27,8 @@ DEEPGRAM_COMMON_OPTIONS: dict[str, bool] = {
     "smart_format": True,
 }
 
+DEFAULT_STT_MODE = "deepgram-ru-nova2"
+
 
 STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
     "mock": SttModeConfig(
@@ -44,8 +46,8 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         language="multi",
         options=DEEPGRAM_COMMON_OPTIONS,
         description=(
-            "Assumes Deepgram nova-3 with language=multi is the current best candidate "
-            "for RU/KZ code-switching experiments."
+            "Deepgram nova-3 with language=multi. Kept for RU/KZ code-switching research; "
+            "manual results were not production-ready."
         ),
     ),
     "deepgram-ru-nova3": SttModeConfig(
@@ -62,7 +64,7 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         model="nova-2",
         language="ru",
         options=DEEPGRAM_COMMON_OPTIONS,
-        description="Russian-only Deepgram nova-2 baseline to compare against nova-3.",
+        description="MVP default STT mode after manual RU tests; Russian-only Deepgram nova-2.",
     ),
     "deepgram-default": SttModeConfig(
         name="deepgram-default",
@@ -77,9 +79,9 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
 
 STT_MODE_ORDER = [
     "mock",
-    "deepgram-multi-nova3",
-    "deepgram-ru-nova3",
     "deepgram-ru-nova2",
+    "deepgram-ru-nova3",
+    "deepgram-multi-nova3",
     "deepgram-default",
 ]
 

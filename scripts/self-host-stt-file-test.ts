@@ -3,6 +3,7 @@ import { basename, resolve } from "node:path";
 import { loadEnvFiles } from "./load-env";
 import { fetchJsonWithDiagnostics } from "../src/app/dev/selfhost-stt/fetchDiagnostics";
 import {
+  DEFAULT_STT_MODE,
   DEFAULT_STT_SCENARIO_ID,
   audioContentTypeForPath,
   flagValue,
@@ -19,7 +20,7 @@ async function main() {
 
   const filePath = resolve(file);
   const scenarioId = flagValue("--scenario") ?? DEFAULT_STT_SCENARIO_ID;
-  const mode = flagValue("--mode") ?? "deepgram-multi-nova3";
+  const mode = flagValue("--mode") ?? DEFAULT_STT_MODE;
   const url = `${voiceAgentUrl()}/stt/experiment`;
   const bytes = await readFile(filePath);
   const contentType = audioContentTypeForPath(filePath);
@@ -47,6 +48,8 @@ async function main() {
         scenarioId,
         mode: result.body.mode,
         score: result.body.score,
+        confidence: result.body.confidence,
+        usable: result.body.usable,
         transcript: result.body.transcript,
         keywordHits: result.body.keyword_hits,
         missedKeywords: result.body.missed_keywords,

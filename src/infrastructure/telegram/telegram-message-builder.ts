@@ -32,6 +32,10 @@ const aiScoreLabels: Record<Lead["aiScore"], string> = {
   SPAM: "Похоже на спам",
 };
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
 function fallback(value: string | null | undefined, emptyLabel: string): string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : emptyLabel;
@@ -55,6 +59,43 @@ function statusLine(status: TelegramLeadCardStatus | undefined): string | null {
   }
 
   return null;
+}
+
+function rawWarnings(call: Call | null | undefined): string[] {
+  const root = asRecord(call?.rawPayload);
+  const stt = asRecord(root?.stt) ?? asRecord(root?.sttResult) ?? asRecord(root?.stt_result);
+  const value = stt?.warnings ?? root?.warnings;
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+}
+
+function problemUnclear(lead: Lead): boolean {
+  const problem = lead.problem.toLocaleLowerCase("ru");
+  return problem.includes("не удалось определить") || problem.includes("распознавание слабое");
+}
+
+function callbackMissingFields(lead: Lead, call: Call | null | undefined): string[] {
+  const missing: string[] = [];
+  const warnings = rawWarnings(call);
+
+  if (problemUnclear(lead)) {
+    missing.push("problem unclear");
+  }
+  if (!lead.address?.trim()) {
+    missing.push("address missing");
+  }
+  if (!lead.customerName?.trim()) {
+    missing.push("name missing");
+  }
+  if (warnings.includes("safety_low_confidence")) {
+    missing.push("safety unclear if relevant");
+  }
+
+  return missing;
 }
 
 function buildKeyboard(input: TelegramLeadCardInput): TelegramInlineKeyboardMarkup | undefined {
@@ -95,6 +136,15 @@ export function buildTelegramLeadCardMessage(input: TelegramLeadCardInput): Tele
     `⏰ Время звонка: ${formatTelegramDate(callTimeForLead(lead, call))}`,
     `🔥 AI-Оценка: ${aiScoreLabels[lead.aiScore]}`,
   ];
+
+  if (lead.status === "CALLBACK_PENDING") {
+    const missingFields = callbackMissingFields(lead, call);
+    lines.push("", "⚠️ Распознавание слабое. Нужно перезвонить клиенту.");
+
+    if (missingFields.length > 0) {
+      lines.push(`Не хватает: ${missingFields.join(", ")}`);
+    }
+  }
 
   if (lead.safetyFlag !== "NONE") {
     lines.push(

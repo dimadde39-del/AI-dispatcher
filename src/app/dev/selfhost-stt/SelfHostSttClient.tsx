@@ -5,6 +5,13 @@ import {
   type FetchFailureDiagnostic,
   fetchJsonWithDiagnostics,
 } from "./fetchDiagnostics";
+import {
+  type ExperimentConfidence,
+  type ExperimentHistoryEntry,
+  historyToJson,
+  historyToMarkdown,
+  recommendBestModes,
+} from "./experimentHistory";
 
 type RecordingStatus = "idle" | "recording" | "uploading" | "done" | "error";
 type ServiceState = "checking" | "online" | "offline";
@@ -75,16 +82,22 @@ interface ExperimentResponse {
   transcript?: string;
   score?: number;
   keyword_hits?: string[];
+  keywordHits?: string[];
   missed_keywords?: string[];
+  missedKeywords?: string[];
   has_russian?: boolean;
   has_kazakh_chars?: boolean;
   likely_wrong_language?: boolean;
   warnings?: string[];
+  confidence?: ExperimentConfidence;
+  usable?: boolean;
+  requiresCallback?: boolean;
 }
 
 const VOICE_AGENT_FIX = "Run npm run voice-agent:dev and open http://localhost:8001/health";
 const MEDIA_RECORDER_WARNING =
   "This browser/context does not support MediaRecorder. Use Chrome/Edge on localhost, or use file upload/mock transcript.";
+const DEFAULT_STT_MODE = "deepgram-ru-nova2";
 
 const FALLBACK_MODES: SttMode[] = [
   {
@@ -96,12 +109,12 @@ const FALLBACK_MODES: SttMode[] = [
     description: "Zero-cost text passthrough for local pipeline checks.",
   },
   {
-    id: "deepgram-multi-nova3",
+    id: "deepgram-ru-nova2",
     provider: "deepgram",
-    model: "nova-3",
-    language: "multi",
+    model: "nova-2",
+    language: "ru",
     options: { punctuate: true, smart_format: true },
-    description: "Deepgram nova-3 with language=multi for RU/KZ code-switching experiments.",
+    description: "MVP default: Russian-only Deepgram nova-2.",
   },
   {
     id: "deepgram-ru-nova3",
@@ -112,12 +125,12 @@ const FALLBACK_MODES: SttMode[] = [
     description: "Russian-only Deepgram nova-3 baseline.",
   },
   {
-    id: "deepgram-ru-nova2",
+    id: "deepgram-multi-nova3",
     provider: "deepgram",
-    model: "nova-2",
-    language: "ru",
+    model: "nova-3",
+    language: "multi",
     options: { punctuate: true, smart_format: true },
-    description: "Russian-only Deepgram nova-2 baseline.",
+    description: "Deepgram nova-3 with language=multi for RU/KZ research.",
   },
   {
     id: "deepgram-default",
@@ -218,7 +231,65 @@ function normalizedForKeyword(value: string): string {
   return normalizeText(value).replaceAll("ё", "е").split(/\s+/u).filter(Boolean).join(" ");
 }
 
+function classifyExperimentScore(
+  transcript: string,
+  scenario: SttScenario,
+  score: number,
+  warnings: string[],
+): Pick<ExperimentResponse, "confidence" | "usable" | "requiresCallback" | "warnings"> {
+  if (!transcript.trim()) {
+    return {
+      confidence: "unusable",
+      usable: false,
+      requiresCallback: true,
+      warnings: ["empty_transcript", "low_confidence"],
+    };
+  }
+
+  const nextWarnings = [...warnings];
+  if (score < 60 && !nextWarnings.includes("low_confidence")) {
+    nextWarnings.push("low_confidence");
+  }
+
+  const safetyLowConfidence = ["gas-emergency", "electric-danger"].includes(scenario.id) && score < 80;
+  if (safetyLowConfidence && !nextWarnings.includes("safety_low_confidence")) {
+    nextWarnings.push("safety_low_confidence");
+  }
+
+  const confidence: ExperimentConfidence =
+    score < 40 ? "unusable" : score < 60 ? "low" : score < 80 ? "medium" : "high";
+  const usable = confidence !== "unusable";
+
+  return {
+    confidence,
+    usable,
+    requiresCallback: !usable || score < 60 || safetyLowConfidence,
+    warnings: nextWarnings,
+  };
+}
+
 function scoreTranscriptLocally(transcript: string, scenario: SttScenario): ExperimentResponse {
+  if (!transcript.trim()) {
+    const classification = classifyExperimentScore(transcript, scenario, 0, []);
+
+    return {
+      ok: true,
+      mode: "local-mock-score",
+      modeConfig: FALLBACK_MODES[0],
+      scenario,
+      transcript,
+      score: 0,
+      keyword_hits: [],
+      keywordHits: [],
+      missed_keywords: scenario.expected_keywords,
+      missedKeywords: scenario.expected_keywords,
+      has_russian: false,
+      has_kazakh_chars: false,
+      likely_wrong_language: false,
+      ...classification,
+    };
+  }
+
   const normalizedTranscript = normalizedForKeyword(transcript);
   const keywordHits: string[] = [];
   const missedKeywords: string[] = [];
@@ -267,6 +338,7 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
   if (scenario.expected_language === "mixed" && (!hasRussian || !hasKazakhChars)) {
     warnings.push("mixed_language_signal_missing");
   }
+  const classification = classifyExperimentScore(transcript, scenario, score, warnings);
 
   return {
     ok: true,
@@ -276,11 +348,13 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
     transcript,
     score,
     keyword_hits: keywordHits,
+    keywordHits,
     missed_keywords: missedKeywords,
+    missedKeywords,
     has_russian: hasRussian,
     has_kazakh_chars: hasKazakhChars,
     likely_wrong_language: likelyWrongLanguage,
-    warnings,
+    ...classification,
   };
 }
 
@@ -291,6 +365,14 @@ function preferredMimeType(): string | undefined {
   }
 
   return candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate));
+}
+
+function responseKeywordHits(result: ExperimentResponse): string[] {
+  return result.keywordHits ?? result.keyword_hits ?? [];
+}
+
+function responseMissedKeywords(result: ExperimentResponse): string[] {
+  return result.missedKeywords ?? result.missed_keywords ?? [];
 }
 
 function isMediaRecorderAvailable(): boolean {
@@ -306,18 +388,20 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const logIdRef = useRef(0);
+  const historyIdRef = useRef(0);
   const [status, setStatus] = useState<RecordingStatus>("idle");
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [transcript, setTranscript] = useState("");
   const [mockText, setMockText] = useState<string>(FALLBACK_SCENARIOS[0].original_text);
   const [modes, setModes] = useState<SttMode[]>(FALLBACK_MODES);
   const [scenarios, setScenarios] = useState<SttScenario[]>(FALLBACK_SCENARIOS);
-  const [selectedMode, setSelectedMode] = useState("deepgram-multi-nova3");
+  const [selectedMode, setSelectedMode] = useState(DEFAULT_STT_MODE);
   const [selectedScenarioId, setSelectedScenarioId] = useState(FALLBACK_SCENARIOS[0].id);
   const [lastProviderCallId, setLastProviderCallId] = useState<string | null>(null);
   const [lastProvider, setLastProvider] = useState<string | null>(null);
   const [lastMode, setLastMode] = useState<string | null>(null);
   const [experimentResult, setExperimentResult] = useState<ExperimentResponse | null>(null);
+  const [resultHistory, setResultHistory] = useState<ExperimentHistoryEntry[]>([]);
   const [mediaRecorderAvailable, setMediaRecorderAvailable] = useState<boolean | null>(null);
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
   const [lastFailure, setLastFailure] = useState<FetchFailureDiagnostic | null>(null);
@@ -336,6 +420,7 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     [modes, selectedMode],
   );
 
+  const recommendations = useMemo(() => recommendBestModes(resultHistory), [resultHistory]);
   const voiceAgentOnline = serviceStatus.state === "online";
 
   const statusLabel = useMemo(() => {
@@ -457,13 +542,36 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     streamRef.current = null;
   }, []);
 
-  const applyExperimentResponse = useCallback((body: ExperimentResponse) => {
-    setTranscript(body.transcript ?? "");
-    setLastProvider(body.modeConfig?.provider ?? null);
-    setLastProviderCallId(null);
-    setLastMode(body.mode ?? null);
-    setExperimentResult(body);
-  }, []);
+  const applyExperimentResponse = useCallback(
+    (body: ExperimentResponse) => {
+      const resolvedScenario = body.scenario ?? selectedScenario;
+      const score = body.score ?? 0;
+      const confidence = body.confidence ?? (score < 40 ? "unusable" : score < 60 ? "low" : score < 80 ? "medium" : "high");
+      const usable = body.usable ?? confidence !== "unusable";
+      const nextTranscript = body.transcript ?? "";
+      const entry: ExperimentHistoryEntry = {
+        id: ++historyIdRef.current,
+        timestamp: new Date().toISOString(),
+        mode: body.mode ?? selectedMode,
+        scenarioId: resolvedScenario.id,
+        scenarioLabel: resolvedScenario.label,
+        score,
+        confidence,
+        usable,
+        missedKeywords: responseMissedKeywords(body),
+        warnings: body.warnings ?? [],
+        transcript: nextTranscript,
+      };
+
+      setTranscript(nextTranscript);
+      setLastProvider(body.modeConfig?.provider ?? null);
+      setLastProviderCallId(null);
+      setLastMode(body.mode ?? null);
+      setExperimentResult(body);
+      setResultHistory((current) => [entry, ...current].slice(0, 80));
+    },
+    [selectedMode, selectedScenario],
+  );
 
   const runExperimentAudioBlob = useCallback(
     async (blob: Blob, fileName: string) => {
@@ -518,7 +626,10 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
         mode: body.mode,
         scenario: body.scenario?.id,
         score: body.score,
-        missed: body.missed_keywords,
+        confidence: body.confidence,
+        usable: body.usable,
+        missed: responseMissedKeywords(body),
+        warnings: body.warnings,
       });
       stopTracks();
     },
@@ -600,7 +711,9 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     addLog("mock-local-score-complete", {
       scenarioId: selectedScenario.id,
       score: result.score,
-      missed: result.missed_keywords,
+      confidence: result.confidence,
+      usable: result.usable,
+      missed: responseMissedKeywords(result),
     });
   }
 
@@ -658,6 +771,21 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     });
   }
 
+  async function copyHistory(format: "markdown" | "json") {
+    if (resultHistory.length === 0) {
+      addLog("history-copy-empty", "No STT experiment history to copy.", "warn");
+      return;
+    }
+
+    const value = format === "markdown" ? historyToMarkdown(resultHistory) : historyToJson(resultHistory);
+    try {
+      await navigator.clipboard.writeText(value);
+      addLog("history-copied", { format, rows: resultHistory.length });
+    } catch (error) {
+      addLog("history-copy-error", error, "error");
+    }
+  }
+
   function chooseScenario(scenarioId: string) {
     const scenario = scenarios.find((candidate) => candidate.id === scenarioId);
     if (!scenario) {
@@ -675,6 +803,8 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
   const localMockDisabled = !enabled || status === "uploading" || !mockText.trim();
   const mockEmitDisabled = !enabled || !voiceAgentOnline || status === "uploading" || !mockText.trim();
   const experimentScore = experimentResult?.score;
+  const experimentConfidence = experimentResult?.confidence;
+  const experimentUsable = experimentResult?.usable;
   const serviceBadgeClass = serviceStatus.state === "online" ? "badge badge-success" : "badge badge-warning";
   const serviceStatusLabel =
     serviceStatus.state === "checking" ? "checking" : serviceStatus.state === "online" ? "online" : "offline";
@@ -885,14 +1015,22 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
           </p>
           {experimentScore !== undefined ? (
             <div className="actions" style={{ marginBottom: 12 }}>
-              <span className={experimentScore >= 80 ? "badge badge-success" : "badge badge-warning"}>
+              <span className={experimentUsable === false ? "badge badge-danger" : experimentScore >= 80 ? "badge badge-success" : "badge badge-warning"}>
                 Score {experimentScore}
+              </span>
+              {experimentConfidence ? (
+                <span className={experimentConfidence === "high" ? "badge badge-success" : experimentConfidence === "unusable" ? "badge badge-danger" : "badge badge-warning"}>
+                  {experimentConfidence}
+                </span>
+              ) : null}
+              <span className={experimentUsable ? "badge badge-success" : "badge badge-danger"}>
+                {experimentUsable ? "usable" : "not usable"}
               </span>
               <span className="badge badge-neutral">{selectedScenario.label}</span>
             </div>
           ) : null}
           <div className="code-block" style={{ minHeight: 140 }}>
-            {transcript || "No transcript yet."}
+            {transcript || (experimentResult ? "Empty transcript." : "No transcript yet.")}
           </div>
         </div>
 
@@ -902,13 +1040,13 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
             <div>
               <strong>Keyword hits</strong>
               <div className="code-block" style={{ marginTop: 8 }}>
-                {(experimentResult?.keyword_hits ?? []).join(", ") || "none"}
+                {experimentResult ? responseKeywordHits(experimentResult).join(", ") || "none" : "none"}
               </div>
             </div>
             <div>
               <strong>Missed keywords</strong>
               <div className="code-block" style={{ marginTop: 8 }}>
-                {(experimentResult?.missed_keywords ?? []).join(", ") || "none"}
+                {experimentResult ? responseMissedKeywords(experimentResult).join(", ") || "none" : "none"}
               </div>
             </div>
             <div>
@@ -917,7 +1055,97 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
                 {(experimentResult?.warnings ?? []).join(", ") || "none"}
               </div>
             </div>
+            <div>
+              <strong>Callback required</strong>
+              <div className="code-block" style={{ marginTop: 8 }}>
+                {experimentResult ? (experimentResult.requiresCallback ? "yes" : "no") : "none"}
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
+
+      <section className="card" style={{ marginTop: 16 }}>
+        <div className="page-header" style={{ marginBottom: 12 }}>
+          <div>
+            <h2 style={{ margin: 0 }}>Result history</h2>
+          </div>
+          <div className="actions">
+            <button type="button" className="button-secondary" onClick={() => void copyHistory("markdown")} disabled={resultHistory.length === 0}>
+              Copy markdown
+            </button>
+            <button type="button" className="button-secondary" onClick={() => void copyHistory("json")} disabled={resultHistory.length === 0}>
+              Copy JSON
+            </button>
+            <button type="button" className="button-secondary" onClick={() => setResultHistory([])} disabled={resultHistory.length === 0}>
+              Clear history
+            </button>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Scenario</th>
+                <th>Mode</th>
+                <th>Score</th>
+                <th>Confidence</th>
+                <th>Usable</th>
+                <th>Missed keywords</th>
+                <th>Warnings</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultHistory.length === 0 ? (
+                <tr>
+                  <td colSpan={8}>No results yet.</td>
+                </tr>
+              ) : (
+                resultHistory.map((entry) => (
+                  <tr key={entry.id}>
+                    <td>{entry.timestamp}</td>
+                    <td>{entry.scenarioLabel}</td>
+                    <td>{entry.mode}</td>
+                    <td>{entry.score}</td>
+                    <td>{entry.confidence}</td>
+                    <td>{entry.usable ? "yes" : "no"}</td>
+                    <td>{entry.missedKeywords.join(", ") || "none"}</td>
+                    <td>{entry.warnings.join(", ") || "none"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ marginTop: 16 }}>
+          <h3>Best usable mode by scenario</h3>
+          {recommendations.length === 0 ? (
+            <p className="muted">No usable results yet.</p>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Scenario</th>
+                    <th>Mode</th>
+                    <th>Score</th>
+                    <th>Confidence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recommendations.map((recommendation) => (
+                    <tr key={recommendation.scenarioId}>
+                      <td>{recommendation.scenarioLabel}</td>
+                      <td>{recommendation.mode}</td>
+                      <td>{recommendation.score}</td>
+                      <td>{recommendation.confidence}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </section>
 

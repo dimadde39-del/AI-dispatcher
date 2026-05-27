@@ -507,3 +507,61 @@ test("handleCallEnded creates a call, lead, call event, and Telegram message wit
   assert.equal(state.telegramMessages[0]?.leadId, leadId);
   assert.ok(state.auditLogs.some((log) => log.eventType === "VOICE_CALL_ENDED_LEAD_CREATED"));
 });
+
+test("handleCallEnded marks empty self-host transcript as no lead when there is no useful signal", async () => {
+  const { repositories, state } = createMemoryRepositories();
+  const { masterInterface, sentLeadIds } = createMasterInterfaceMock();
+  const event = callEndedEvent({
+    provider: "self-host",
+    providerCallId: "selfhost-empty-1",
+    customerPhone: null,
+    transcript: null,
+    summary: null,
+    rawPayload: {
+      confidence: "unusable",
+      usable: false,
+      requiresCallback: true,
+      warnings: ["empty_transcript", "low_confidence"],
+    },
+  });
+
+  const result = await handleCallEnded(repositories, event, {
+    masterInterface,
+  });
+
+  assert.equal(result.ignored, true);
+  assert.equal(result.reason, "EMPTY_TRANSCRIPT_NO_USEFUL_SIGNAL");
+  assert.equal(state.calls[0]?.status, "NO_LEAD");
+  assert.equal(state.leads.length, 0);
+  assert.deepEqual(sentLeadIds, []);
+  assert.ok(state.auditLogs.some((log) => log.eventType === "VOICE_CALL_ENDED_NO_LEAD"));
+});
+
+test("handleCallEnded creates callback-required lead for low-confidence self-host transcript", async () => {
+  const { repositories, state } = createMemoryRepositories();
+  const { masterInterface, sentLeadIds } = createMasterInterfaceMock();
+  const event = callEndedEvent({
+    provider: "self-host",
+    providerCallId: "selfhost-low-1",
+    transcript: "Течет вода, адрес плохо слышно.",
+    summary: null,
+    rawPayload: {
+      score: 50,
+      confidence: "low",
+      usable: true,
+      requiresCallback: true,
+      warnings: ["low_confidence"],
+    },
+  });
+
+  const result = await handleCallEnded(repositories, event, {
+    masterInterface,
+  });
+
+  assert.equal(result.leadId, leadId);
+  assert.equal(state.calls[0]?.status, "PROCESSED");
+  assert.equal(state.leads[0]?.status, "CALLBACK_PENDING");
+  assert.equal(state.leads[0]?.aiScore, "COLD");
+  assert.deepEqual(sentLeadIds, [leadId]);
+  assert.ok(state.leadEvents.some((eventRecord) => eventRecord.eventType === "VOICE_CALL_ENDED_CALLBACK_LEAD_CREATED"));
+});

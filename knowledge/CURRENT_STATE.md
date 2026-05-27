@@ -2,8 +2,9 @@
 
 ## Phase
 
-Current phase: self-host STT language-routing experiment after the upload-based STT spike exposed the
-need to compare RU/KZ/MIX transcription modes before any LLM/TTS loop.
+Current phase: self-host STT language-routing experiment has produced an initial manual decision:
+use `deepgram-ru-nova2` as the MVP default while researching better KZ and mixed RU/KZ STT before any
+LLM/TTS loop.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -149,22 +150,35 @@ The product sells saved orders, not an "AI bot".
 
 ## Implemented Self-Host STT Experiment Framework
 
-- Named STT modes exist for `mock`, `deepgram-multi-nova3`, `deepgram-ru-nova3`,
-  `deepgram-ru-nova2`, and `deepgram-default`.
+- Named STT modes exist for `mock`, `deepgram-ru-nova2`, `deepgram-ru-nova3`,
+  `deepgram-multi-nova3`, and `deepgram-default`.
 - `STT_PROVIDER` still works for the legacy mock/deepgram path; `STT_MODE` selects a named
-  experiment mode.
+  experiment mode. Default `STT_MODE` is now `deepgram-ru-nova2`.
 - Shared STT scenarios live in `services/voice-agent/app/stt_scenarios.py` for RU urgent plumbing,
   KZ water leak, mixed RU/KZ water leak, gas emergency, electric danger, and noisy fallback phrases.
 - `POST /stt/experiment` transcribes one sample, scores keyword hits/misses, detects Cyrillic/Kazakh
-  signals, flags likely wrong-language transcripts, and returns warnings.
+  signals, flags likely wrong-language transcripts, and returns warnings, confidence, usability, and
+  callback-required fields.
+- Empty STT transcripts are safe scored results instead of fatal 400s: HTTP 200, `score: 0`,
+  `confidence: "unusable"`, `usable: false`, `requiresCallback: true`, warnings
+  `empty_transcript` and `low_confidence`, and all expected keywords marked missed.
+- Low-confidence thresholds are explicit: score `< 60` adds `low_confidence`, score `< 40` is
+  unusable, and gas/electric safety scenarios below 80 add `safety_low_confidence`.
 - `/dev/selfhost-stt` now has scenario and mode selectors, voice-agent health diagnostics, local
   mock scoring, file upload fallback, scored recording uploads when MediaRecorder is available,
-  score details, and the mock transcript emit path for checking the backend/Telegram pipeline.
+  score details, result history, Markdown/JSON export, best usable mode recommendations, and the mock
+  transcript emit path for checking the backend/Telegram pipeline.
 - `npm run selfhost:stt-mock` scores a known mock transcript through `/stt/experiment`;
   `npm run selfhost:stt-mock-emit` sends a known mock transcript through
   `/stt/transcribe-and-emit`; `npm run selfhost:stt-file` tests prerecorded synthetic audio files.
 - `GET /health` returns safe service/provider/mode/backend URL diagnostics and does not expose
   secrets.
+- Manual STT results: RU urgent plumbing was best on `deepgram-ru-nova2` with score 89; KZ and mixed
+  RU/KZ samples are not production-ready; gas/safety samples are not reliable enough for confident
+  automation.
+- Self-host low-confidence call-end events no longer create confident normal leads. Weak but useful
+  calls become `CALLBACK_PENDING` leads with a Telegram callback warning, while empty calls without
+  useful signal or caller phone are logged as `NO_LEAD`.
 - `docs/STT_EXPERIMENTS.md` defines recording steps, mode comparison, pass/fail rules, and the next
   gate to choose STT before adding self-host LLM/TTS.
 
@@ -214,7 +228,7 @@ The product sells saved orders, not an "AI bot".
 
 ## Next Step
 
-Run local mock emit first, then test prerecorded synthetic RU/KZ audio files or Chrome/Edge
-MediaRecorder recordings across the Deepgram modes. Choose one STT mode before starting any
-self-host LLM/TTS response loop. Keep Vapi available as the fallback while the self-host spike proves
-RU/KZ quality; real phone number testing comes after the local STT pipeline works.
+Research alternative STT providers for Kazakh and RU/KZ code switching: Google Speech-to-Text, Azure
+Speech, Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable STT. Keep Vapi
+available as the fallback while the self-host spike proves RU/KZ quality; real phone number testing
+comes after the local STT pipeline works.

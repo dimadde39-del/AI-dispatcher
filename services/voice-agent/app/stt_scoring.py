@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import re
+from typing import Literal
 
 from .stt_scenarios import SttScenario
 
@@ -21,6 +22,8 @@ SPANISH_OR_ENGLISH_JUNK = (
     "my name is",
     "bathroom",
 )
+SAFETY_SCENARIO_IDS = {"gas-emergency", "electric-danger"}
+SttConfidence = Literal["high", "medium", "low", "unusable"]
 
 
 @dataclass(frozen=True)
@@ -32,20 +35,42 @@ class SttScore:
     likely_wrong_language: bool
     score: int
     warnings: list[str]
+    confidence: SttConfidence
+    usable: bool
+    requires_callback: bool
 
     def to_public_dict(self) -> dict[str, object]:
         return {
             "keyword_hits": self.keyword_hits,
+            "keywordHits": self.keyword_hits,
             "missed_keywords": self.missed_keywords,
+            "missedKeywords": self.missed_keywords,
             "has_russian": self.has_russian,
             "has_kazakh_chars": self.has_kazakh_chars,
             "likely_wrong_language": self.likely_wrong_language,
             "score": self.score,
             "warnings": self.warnings,
+            "confidence": self.confidence,
+            "usable": self.usable,
+            "requiresCallback": self.requires_callback,
         }
 
 
 def score_transcript(transcript: str, scenario: SttScenario) -> SttScore:
+    if not transcript.strip():
+        return SttScore(
+            keyword_hits=[],
+            missed_keywords=list(scenario.expected_keywords),
+            has_russian=False,
+            has_kazakh_chars=False,
+            likely_wrong_language=False,
+            score=0,
+            warnings=["empty_transcript", "low_confidence"],
+            confidence="unusable",
+            usable=False,
+            requires_callback=True,
+        )
+
     normalized_transcript = _normalize(transcript)
     keyword_hits: list[str] = []
     missed_keywords: list[str] = []
@@ -75,6 +100,14 @@ def score_transcript(transcript: str, scenario: SttScenario) -> SttScore:
         warnings.append("kazakh_chars_missing")
     if scenario.expected_language == "mixed" and (not has_russian or not has_kazakh_chars):
         warnings.append("mixed_language_signal_missing")
+    if score < 60:
+        warnings.append("low_confidence")
+    safety_low_confidence = scenario.id in SAFETY_SCENARIO_IDS and score < 80
+    if safety_low_confidence:
+        warnings.append("safety_low_confidence")
+
+    confidence = _confidence(score)
+    usable = confidence != "unusable"
 
     return SttScore(
         keyword_hits=keyword_hits,
@@ -84,6 +117,9 @@ def score_transcript(transcript: str, scenario: SttScenario) -> SttScore:
         likely_wrong_language=likely_wrong_language,
         score=score,
         warnings=warnings,
+        confidence=confidence,
+        usable=usable,
+        requires_callback=not usable or score < 60 or safety_low_confidence,
     )
 
 
@@ -109,6 +145,16 @@ def _looks_like_wrong_language(normalized_transcript: str, expected_language: st
         return False
 
     return any(marker in normalized_transcript for marker in SPANISH_OR_ENGLISH_JUNK)
+
+
+def _confidence(score: int) -> SttConfidence:
+    if score < 40:
+        return "unusable"
+    if score < 60:
+        return "low"
+    if score < 80:
+        return "medium"
+    return "high"
 
 
 def _normalize(value: str) -> str:

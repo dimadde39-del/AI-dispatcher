@@ -3,7 +3,7 @@ import type { VoiceCallEndedEvent } from "@/interfaces/voice-event";
 
 export type ExtractedLeadFromVoiceEvent = Omit<CreateLeadInput, "masterId" | "callId" | "status">;
 
-const UNKNOWN_PROBLEM = "Не удалось определить проблему";
+export const UNKNOWN_PROBLEM = "Не удалось определить проблему";
 const SUMMARY_LIMIT = 500;
 const PROBLEM_LIMIT = 140;
 

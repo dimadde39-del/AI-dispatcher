@@ -1,5 +1,16 @@
 # Wiki Operation Log
 
+## 2026-05-27
+
+- Tuned self-host STT based on manual Deepgram results: `deepgram-ru-nova2` is now the MVP default,
+  RU worked best, KZ/MIX is not production-ready, and gas/safety confidence is insufficient for
+  confident automation. Empty `/stt/experiment` transcripts now return safe scored HTTP 200 results,
+  low-confidence thresholds are explicit, `/dev/selfhost-stt` records result history with
+  Markdown/JSON export and best usable mode recommendations, and low-confidence self-host calls now
+  become callback-required leads or `NO_LEAD` instead of confident normal leads.
+- Next STT research targets Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex
+  SpeechKit if viable, and other Kazakh-capable providers.
+
 ## 2026-05-24
 
 - Hardened the self-host STT dev harness: voice-agent health now returns safe provider/mode/backend

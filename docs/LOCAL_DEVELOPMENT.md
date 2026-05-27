@@ -38,7 +38,8 @@ simulate Vapi fixture payloads without live Vapi credentials.
 self-host dry-runs can run without it outside production.
 `STT_PROVIDER`, `STT_MODE`, and `DEEPGRAM_API_KEY` are used by the Python voice-agent for local STT
 experiments. Deepgram live calls are optional and should be run only when intentionally comparing
-paid STT modes.
+paid STT modes. The current MVP default mode is `STT_MODE=deepgram-ru-nova2`; KZ and mixed RU/KZ STT
+remain research-only.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` is safe for browser use and defaults to
@@ -390,6 +391,8 @@ The page can:
 - score uploaded `.webm`, `.wav`, or `.mp3` files through `/stt/experiment`;
 - record a short browser microphone clip when MediaRecorder is available;
 - emit a typed mock transcript through the Python service into `/api/webhooks/self-host-voice`.
+- keep a result history table with mode, scenario, score, confidence, usability, missed keywords, and
+  warnings, plus copy/export to Markdown or JSON.
 
 Zero-cost mock scoring path:
 
@@ -414,7 +417,7 @@ voice-agent -> webhook -> Supabase/Telegram pipeline works without paid STT.
 File upload path for prerecorded synthetic samples:
 
 ```bash
-npm run selfhost:stt-file -- --file=C:\path\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-multi-nova3
+npm run selfhost:stt-file -- --file=C:\path\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-ru-nova2
 ```
 
 Real phone number testing comes after local mock emit and local uploaded-audio STT are working.
@@ -423,13 +426,13 @@ Optional Deepgram path:
 
 ```bash
 STT_PROVIDER=deepgram
-STT_MODE=deepgram-multi-nova3
+STT_MODE=deepgram-ru-nova2
 DEEPGRAM_API_KEY=
 STT_LANGUAGE_MODE=ru-kk
 ```
 
 Named STT modes are configured in `services/voice-agent/app/stt_modes.py`: `mock`,
-`deepgram-multi-nova3`, `deepgram-ru-nova3`, `deepgram-ru-nova2`, and `deepgram-default`.
+`deepgram-ru-nova2`, `deepgram-ru-nova3`, `deepgram-multi-nova3`, and `deepgram-default`.
 `STT_PROVIDER=deepgram` still works for the legacy env-driven path, while `STT_MODE` selects a named
 experiment mode.
 
@@ -440,7 +443,15 @@ POST http://localhost:8001/stt/experiment
 ```
 
 The dev page now uses `/stt/experiment` for scored recordings and keeps the typed mock transcript
-emit path for checking the existing self-host webhook pipeline.
+emit path for checking the existing self-host webhook pipeline. Empty transcripts are scored results,
+not fatal errors: they return `score: 0`, `confidence: "unusable"`, `usable: false`, and
+callback-required warnings. Score `< 60` is low confidence, score `< 40` is unusable, and safety
+scenarios below 80 add `safety_low_confidence`.
+
+Manual STT results currently set the default to `deepgram-ru-nova2`: RU urgent plumbing scored 89,
+while KZ/MIX samples were not production-ready and gas/safety samples were not reliable enough for
+confident automation. Next STT research should compare Google Speech-to-Text, Azure Speech,
+Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable providers.
 
 Useful helpers:
 

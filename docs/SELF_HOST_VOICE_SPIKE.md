@@ -155,17 +155,27 @@ Deepgram is optional. Set this only when intentionally testing external STT:
 
 ```bash
 STT_PROVIDER=deepgram
-STT_MODE=deepgram-multi-nova3
+STT_MODE=deepgram-ru-nova2
 DEEPGRAM_API_KEY=...
 ```
 
-The named mode assumptions live in `services/voice-agent/app/stt_modes.py`. The primary candidate is
-`deepgram-multi-nova3`, which sends `language=multi&model=nova-3`; the RU-only nova-3 and nova-2
-modes are baselines, and `deepgram-default` sends no explicit model or language.
+The named mode assumptions live in `services/voice-agent/app/stt_modes.py`. The current MVP default
+is `deepgram-ru-nova2`. Manual results showed RU performs best there; KZ and mixed RU/KZ are not
+production-ready, and gas/safety confidence is insufficient for confident automation. The
+`deepgram-multi-nova3` mode remains a research comparison, not the default.
 
 Important caveat: Deepgram's current model/language overview clearly lists Russian for Nova-3, but
 Kazakh is not clearly listed there. RU/KZ mixed quality must be measured with real recordings before
 any migration decision.
+
+Low-confidence behavior is required before any self-host production use:
+
+- `/stt/experiment` returns empty transcripts as HTTP 200 scored results with `score: 0`,
+  `confidence: "unusable"`, `usable: false`, and callback-required warnings.
+- Score `< 60` is low confidence; score `< 40` is unusable.
+- Gas/electric safety scenarios below 80 add `safety_low_confidence`.
+- Low-confidence self-host call-end events create only `CALLBACK_PENDING` leads when there is useful
+  signal or a caller phone; empty calls without useful signal become `NO_LEAD`.
 
 `npm run vapi:recent` is not relevant for self-host calls. Verify self-host output through:
 
@@ -174,5 +184,6 @@ any migration decision.
 - Telegram card delivery
 - Supabase `calls.provider = self-host`
 
-Detailed manual experiment steps are in `docs/STT_EXPERIMENTS.md`. Choose the STT mode before adding
-any self-host LLM/TTS loop.
+Detailed manual experiment steps and observed score tables are in `docs/STT_EXPERIMENTS.md`. Next
+research should compare Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex
+SpeechKit if viable, and other Kazakh-capable STT before adding any self-host LLM/TTS loop.

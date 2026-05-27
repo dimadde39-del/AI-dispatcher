@@ -7,9 +7,11 @@ import {
 } from "../src/app/dev/selfhost-stt/fetchDiagnostics";
 import {
   audioContentTypeForPath,
+  DEFAULT_STT_MODE,
   buildMockEmitPayload,
   buildMockExperimentPayload,
 } from "../scripts/self-host-stt-common";
+import { recommendBestModes, type ExperimentHistoryEntry } from "../src/app/dev/selfhost-stt/experimentHistory";
 
 test("STT fetch diagnostics classify browser network or CORS failures", () => {
   const diagnostic = classifyFetchError("http://localhost:8001/health", new TypeError("Failed to fetch"));
@@ -62,6 +64,51 @@ test("STT mock experiment payload stays local and does not require Deepgram", ()
     scenarioId: "ru-urgent-plumbing",
     text: "Труба течет под ванной.",
   });
+});
+
+test("default self-host STT mode is Deepgram RU nova-2", () => {
+  assert.equal(DEFAULT_STT_MODE, "deepgram-ru-nova2");
+});
+
+test("STT recommendation ignores unusable modes", () => {
+  const entries: ExperimentHistoryEntry[] = [
+    {
+      id: 1,
+      timestamp: "2026-05-24T00:00:00.000Z",
+      mode: "deepgram-multi-nova3",
+      scenarioId: "ru-urgent-plumbing",
+      scenarioLabel: "RU urgent plumbing",
+      score: 99,
+      confidence: "unusable",
+      usable: false,
+      missedKeywords: [],
+      warnings: ["empty_transcript"],
+      transcript: "",
+    },
+    {
+      id: 2,
+      timestamp: "2026-05-24T00:01:00.000Z",
+      mode: "deepgram-ru-nova2",
+      scenarioId: "ru-urgent-plumbing",
+      scenarioLabel: "RU urgent plumbing",
+      score: 89,
+      confidence: "high",
+      usable: true,
+      missedKeywords: ["труба"],
+      warnings: ["missed_keywords"],
+      transcript: "течет в ванной",
+    },
+  ];
+
+  assert.deepEqual(recommendBestModes(entries), [
+    {
+      scenarioId: "ru-urgent-plumbing",
+      scenarioLabel: "RU urgent plumbing",
+      mode: "deepgram-ru-nova2",
+      score: 89,
+      confidence: "high",
+    },
+  ]);
 });
 
 test("STT mock emit payload uses provider mock", () => {

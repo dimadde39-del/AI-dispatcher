@@ -1,4 +1,5 @@
 import { loadEnvFiles } from "./load-env";
+import { DEFAULT_STT_MODE } from "./self-host-stt-common";
 
 loadEnvFiles();
 
@@ -23,17 +24,17 @@ Smoke tests:
   npm run selfhost:stt-mock-emit
 
 File test:
-  npm run selfhost:stt-file -- --file=C:\\path\\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-multi-nova3
+  npm run selfhost:stt-file -- --file=C:\\path\\sample.webm --scenario=ru-urgent-plumbing --mode=${DEFAULT_STT_MODE}
 
 Modes:
   mock
-  deepgram-multi-nova3
+  deepgram-ru-nova2 (default)
   deepgram-ru-nova3
-  deepgram-ru-nova2
+  deepgram-multi-nova3
   deepgram-default
 
 PowerShell audio upload example:
-  curl.exe -X POST "${url}" -F "scenarioId=ru-urgent-plumbing" -F "mode=deepgram-multi-nova3" -F "file=@C:\\path\\sample.webm;type=audio/webm"
+  curl.exe -X POST "${url}" -F "scenarioId=ru-urgent-plumbing" -F "mode=${DEFAULT_STT_MODE}" -F "file=@C:\\path\\sample.webm;type=audio/webm"
 
 Mock scoring example:
   curl.exe -X POST "${url}" -H "content-type: application/json" -d "{\\"scenarioId\\":\\"ru-urgent-plumbing\\",\\"mode\\":\\"mock\\",\\"text\\":\\"truba test\\"}"

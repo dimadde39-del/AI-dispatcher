@@ -9,6 +9,7 @@ import type {
   VoiceEvent,
   VoiceTranscriptUpdatedEvent,
 } from "@/interfaces/voice-event";
+import { decideLeadConfidence, leadInputForConfidence } from "./lead-confidence-policy";
 import { extractLeadFromVoiceEvent } from "./extract-lead-from-voice-event";
 import { resolveMasterForVoiceEvent, type MasterResolutionResult } from "./resolve-master-for-voice-event";
 
@@ -283,6 +284,14 @@ async function sendLeadCardIfReady(
   }
 }
 
+function callEndedLeadEventType(existingLead: Lead | null, callbackRequired: boolean): string {
+  if (existingLead) {
+    return "VOICE_CALL_END_REPLAYED";
+  }
+
+  return callbackRequired ? "VOICE_CALL_ENDED_CALLBACK_LEAD_CREATED" : "VOICE_CALL_ENDED_LEAD_CREATED";
+}
+
 export async function handleCallStarted(
   repositories: RepositoryContext,
   event: VoiceCallStartedEvent,
@@ -332,13 +341,48 @@ export async function handleCallEnded(
   }
 
   const existingLead = await repositories.leads.findByCallId(call.id);
+  const extractedLead = extractLeadFromVoiceEvent(event);
+  const confidenceDecision = decideLeadConfidence(event, extractedLead);
+
+  if (!existingLead && !confidenceDecision.shouldCreateLead) {
+    const noLeadCall =
+      call.status === "NO_LEAD" ? call : await repositories.calls.update(call.id, { status: "NO_LEAD" });
+    await recordAudit(repositories, {
+      eventType: "VOICE_CALL_ENDED_NO_LEAD",
+      entityType: "call",
+      entityId: noLeadCall.id,
+      payload: {
+        masterId: resolution.master.id,
+        provider: event.provider,
+        providerCallId: event.providerCallId,
+        reason: confidenceDecision.reason,
+        warnings: confidenceDecision.warnings,
+        confidence: confidenceDecision.confidence,
+        usable: confidenceDecision.usable,
+        score: confidenceDecision.score,
+      },
+    });
+
+    return {
+      ok: true,
+      eventType: event.type,
+      callId: noLeadCall.id,
+      ignored: true,
+      reason: confidenceDecision.reason,
+    };
+  }
+
   const lead =
     existingLead ??
     (await createLead(repositories, {
-      ...extractLeadFromVoiceEvent(event),
-      masterId: resolution.master.id,
-      callId: call.id,
-      status: "NEW",
+      ...leadInputForConfidence(
+        {
+          ...extractedLead,
+          masterId: resolution.master.id,
+          callId: call.id,
+        },
+        confidenceDecision,
+      ),
     }));
 
   const processedCall = call.status === "PROCESSED" ? call : await repositories.calls.update(call.id, { status: "PROCESSED" });
@@ -351,24 +395,34 @@ export async function handleCallEnded(
     options.sendTelegramLeadCard ?? true,
   );
 
+  const leadEventType = callEndedLeadEventType(existingLead, confidenceDecision.callbackRequired);
+
   await repositories.leadEvents.create({
     leadId: lead.id,
-    eventType: existingLead ? "VOICE_CALL_END_REPLAYED" : "VOICE_CALL_ENDED_LEAD_CREATED",
+    eventType: leadEventType,
     payload: {
       callId: processedCall.id,
       provider: event.provider,
       providerCallId: event.providerCallId,
+      requiresCallback: confidenceDecision.callbackRequired,
+      missingFields: confidenceDecision.missingFields,
+      warnings: confidenceDecision.warnings,
+      confidence: confidenceDecision.confidence,
+      usable: confidenceDecision.usable,
+      score: confidenceDecision.score,
     },
   });
 
   await recordAudit(repositories, {
-    eventType: existingLead ? "VOICE_CALL_END_REPLAYED" : "VOICE_CALL_ENDED_LEAD_CREATED",
+    eventType: leadEventType,
     entityType: "lead",
     entityId: lead.id,
     payload: {
       masterId: resolution.master.id,
       callId: processedCall.id,
       provider: event.provider,
+      requiresCallback: confidenceDecision.callbackRequired,
+      missingFields: confidenceDecision.missingFields,
     },
   });
 

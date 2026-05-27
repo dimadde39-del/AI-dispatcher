@@ -13,9 +13,9 @@
 
 ## Current Task
 
-Stabilize and run the self-host STT language-routing experiment by proving local mock emit, then
-comparing RU/KZ/MIX recordings or uploaded audio files across named STT modes before adding any LLM
-or TTS loop.
+Research and improve Kazakh plus mixed RU/KZ STT after the manual Deepgram experiment. Keep
+`deepgram-ru-nova2` as the MVP RU default, and do not add the self-host LLM/TTS loop until KZ/MIX and
+safety confidence have a better provider path.
 
 ## Done
 
@@ -64,13 +64,18 @@ or TTS loop.
 - Upload-based STT milestone: voice-agent `/stt/transcribe` and `/stt/transcribe-and-emit`, mock STT
   provider, optional Deepgram provider, `/dev/selfhost-stt` browser recorder/mock page, and STT
   health/mock scripts.
-- STT experiment framework: named modes (`mock`, `deepgram-multi-nova3`, `deepgram-ru-nova3`,
-  `deepgram-ru-nova2`, `deepgram-default`), shared scenarios, heuristic transcript scoring,
+- STT experiment framework: named modes (`mock`, `deepgram-ru-nova2`, `deepgram-ru-nova3`,
+  `deepgram-multi-nova3`, `deepgram-default`), shared scenarios, heuristic transcript scoring,
   `/stt/experiment`, dev UI selectors/results, experiment docs, and helper scripts.
 - Hardened STT dev harness: safe voice-agent health response, health-first dev UI diagnostics,
   network/CORS/non-2xx error classification, MediaRecorder warning, file upload fallback, local mock
   scoring, and separate `selfhost:stt-mock`, `selfhost:stt-mock-emit`, and `selfhost:stt-file`
   scripts.
+- Tuned self-host STT defaults and confidence handling from manual results: default
+  `STT_MODE=deepgram-ru-nova2`, empty `/stt/experiment` transcripts return safe HTTP 200 results,
+  low-confidence thresholds are explicit, `/dev/selfhost-stt` keeps result history/export and best
+  usable mode recommendations, and self-host low-confidence calls become callback-required or
+  `NO_LEAD` instead of confident normal leads.
 
 ## Not Started Yet
 
@@ -80,6 +85,7 @@ or TTS loop.
 - Real Vapi phone/Web SDK end-to-end assistant behavior validation.
 - Strict JSON LLM lead extraction.
 - Telegram `/start` onboarding.
-- Manual RU/KZ STT uploaded-file/recording runs and final STT mode decision.
+- Alternative STT provider research for Kazakh and mixed RU/KZ: Google Speech-to-Text, Azure Speech,
+  Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable STT.
 - Self-host LLM and TTS response loop.
 - Self-host SIP/PSTN integration.

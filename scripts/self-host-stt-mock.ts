@@ -28,6 +28,8 @@ async function main() {
         scenarioId: payload.scenarioId,
         mode: result.body.mode,
         score: result.body.score,
+        confidence: result.body.confidence,
+        usable: result.body.usable,
         transcript: result.body.transcript,
         keywordHits: result.body.keyword_hits,
         missedKeywords: result.body.missed_keywords,

@@ -4,7 +4,7 @@ from typing import Any
 from urllib import error, parse, request
 
 from .config import Settings
-from .stt_modes import DEEPGRAM_COMMON_OPTIONS, STT_MODE_CONFIGS, SttModeConfig
+from .stt_modes import DEFAULT_STT_MODE, DEEPGRAM_COMMON_OPTIONS, STT_MODE_CONFIGS, SttModeConfig
 
 
 class SttError(RuntimeError):
@@ -56,8 +56,6 @@ class DeepgramSttProvider:
 
         response = self._post_to_deepgram(audio, content_type or "application/octet-stream")
         transcript = _extract_transcript(response)
-        if not transcript:
-            raise SttError("Deepgram returned an empty transcript.")
 
         return SttResult(
             provider=self.name,
@@ -168,7 +166,7 @@ def _legacy_deepgram_config(settings: Settings) -> SttModeConfig:
 
 
 def _resolve_mode_config(settings: Settings, selector_name: str | None) -> SttModeConfig:
-    selector = (selector_name or settings.stt_mode or settings.stt_provider).strip().lower()
+    selector = (selector_name or settings.stt_mode or settings.stt_provider or DEFAULT_STT_MODE).strip().lower()
     if selector in STT_MODE_CONFIGS:
         return STT_MODE_CONFIGS[selector]
 

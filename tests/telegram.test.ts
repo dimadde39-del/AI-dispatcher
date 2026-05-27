@@ -312,6 +312,29 @@ test("buildTelegramLeadCardMessage uses fallbacks and safety warning", () => {
   assert.equal(message.replyMarkup?.inline_keyboard.length, 1);
 });
 
+test("buildTelegramLeadCardMessage warns on callback-required low-confidence leads", () => {
+  const message = buildTelegramLeadCardMessage({
+    lead: makeLead({
+      customerName: null,
+      address: null,
+      problem: "Распознавание слабое. Нужно перезвонить клиенту.",
+      status: "CALLBACK_PENDING",
+    }),
+    master: makeMaster(),
+    call: makeCall({
+      rawPayload: {
+        warnings: ["low_confidence", "safety_low_confidence"],
+      },
+    }),
+  });
+
+  assert.match(message.text, /⚠️ Распознавание слабое\. Нужно перезвонить клиенту\./u);
+  assert.match(message.text, /problem unclear/u);
+  assert.match(message.text, /address missing/u);
+  assert.match(message.text, /name missing/u);
+  assert.match(message.text, /safety unclear if relevant/u);
+});
+
 test("buildTelegramLeadCardMessage prefers call started time over lead created time", () => {
   const message = buildTelegramLeadCardMessage({
     lead: makeLead({

@@ -47,7 +47,7 @@ npm run selfhost:simulate -- --dry-run
 BACKEND_BASE_URL=http://localhost:3000
 SELF_HOST_VOICE_WEBHOOK_SECRET=
 STT_PROVIDER=mock
-STT_MODE=mock
+STT_MODE=deepgram-ru-nova2
 STT_LANGUAGE_MODE=ru-kk
 DEEPGRAM_MODEL=nova-3
 DEEPGRAM_API_KEY=
@@ -58,10 +58,10 @@ TTS_PROVIDER_API_KEY=
 
 - `BACKEND_BASE_URL`: Next.js backend base URL.
 - `SELF_HOST_VOICE_WEBHOOK_SECRET`: sent as `x-self-host-voice-secret` when configured.
-- `STT_PROVIDER`: `mock` by default. The legacy `deepgram` value still works when
-  `DEEPGRAM_API_KEY` is configured.
-- `STT_MODE`: named experiment mode. Use `deepgram-multi-nova3`, `deepgram-ru-nova3`,
-  `deepgram-ru-nova2`, or `deepgram-default` for paid Deepgram comparisons.
+- `STT_PROVIDER`: legacy provider selector. `mock` is still used for explicit mock requests and
+  zero-cost local checks.
+- `STT_MODE`: named experiment mode. The MVP default is `deepgram-ru-nova2`; use
+  `deepgram-ru-nova3`, `deepgram-multi-nova3`, or `deepgram-default` for paid Deepgram comparisons.
 - `STT_LANGUAGE_MODE`: legacy Deepgram language mode used only when `STT_PROVIDER=deepgram` is used
   without a named `STT_MODE`.
 - `DEEPGRAM_MODEL`: legacy Deepgram model used only when `STT_PROVIDER=deepgram` is used without a
@@ -94,7 +94,7 @@ Safe health response shape:
   "ok": true,
   "service": "voice-agent",
   "sttProvider": "mock",
-  "sttMode": "mock",
+  "sttMode": "deepgram-ru-nova2",
   "backendBaseUrl": "http://localhost:3000"
 }
 ```
@@ -121,12 +121,19 @@ Mock JSON:
 }
 ```
 
-Audio upload uses multipart form field `file`. With `STT_PROVIDER=deepgram`, uploaded audio is sent
-to Deepgram's pre-recorded `/v1/listen` API. With `STT_MODE=deepgram-multi-nova3`, the service sends
-`language=multi&model=nova-3`. Treat every Deepgram mode as a quality test, not a guarantee.
+Audio upload uses multipart form field `file`. Uploaded audio is sent to Deepgram's pre-recorded
+`/v1/listen` API for named Deepgram modes. With `STT_MODE=deepgram-ru-nova2`, the service sends
+`language=ru&model=nova-2`. Treat every Deepgram mode as a quality test, not a guarantee.
 
 `POST /stt/experiment` accepts `scenarioId`, optional `mode`, and an uploaded audio `file`. For local
-scorer checks it also accepts JSON with `mode=mock` and `text`.
+scorer checks it also accepts JSON with `mode=mock` and `text`. Empty transcripts return HTTP 200
+with `score: 0`, `confidence: "unusable"`, `usable: false`, callback-required warnings, and all
+expected keywords marked missed.
+
+Manual STT results set the MVP default to `deepgram-ru-nova2`: RU worked best, KZ/MIX is not
+production-ready, and gas/safety confidence is insufficient for confident automation. Research next:
+Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex SpeechKit if viable, and other
+Kazakh-capable STT.
 
 Do not put lead creation, Telegram formatting, Supabase writes, or billing behavior in this service.
 It should only handle voice/STT orchestration and emit normalized events.

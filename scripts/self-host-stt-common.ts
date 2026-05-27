@@ -1,4 +1,5 @@
 export const DEFAULT_STT_SCENARIO_ID = "ru-urgent-plumbing";
+export const DEFAULT_STT_MODE = "deepgram-ru-nova2";
 export const DEFAULT_STT_TRANSCRIPT =
   "Здравствуйте, у меня труба течет под ванной. Адрес Шымкент, Нурсат, дом 15. Срочно. Меня зовут Дима.";
 
