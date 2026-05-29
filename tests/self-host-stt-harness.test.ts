@@ -91,7 +91,7 @@ test("STT recommendation ignores unusable modes", () => {
       mode: "deepgram-ru-nova2",
       scenarioId: "ru-urgent-plumbing",
       scenarioLabel: "RU urgent plumbing",
-      score: 89,
+      score: 100,
       confidence: "high",
       usable: true,
       missedKeywords: ["труба"],
@@ -105,7 +105,7 @@ test("STT recommendation ignores unusable modes", () => {
       scenarioId: "ru-urgent-plumbing",
       scenarioLabel: "RU urgent plumbing",
       mode: "deepgram-ru-nova2",
-      score: 89,
+      score: 100,
       confidence: "high",
     },
   ]);

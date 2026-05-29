@@ -2,10 +2,11 @@
 
 ## Phase
 
-Current phase: self-host STT language-routing experiment has produced an initial manual decision:
-use `deepgram-ru-nova2` as the MVP default while researching better KZ and mixed RU/KZ STT. A
-noise-aware transcript-to-lead LLM extraction layer now exists for cleanup and Telegram summaries,
-but the self-host realtime LLM response loop and TTS remain deferred.
+Current phase: self-host STT language-routing experiment has produced an exported-result decision:
+use `deepgram-ru-nova2` as the Russian-first MVP default while researching better KZ and mixed
+RU/KZ STT. Do not claim reliable Kazakh support yet. A noise-aware transcript-to-lead LLM
+extraction layer now exists for cleanup and Telegram summaries, but the self-host realtime LLM
+response loop and TTS remain deferred.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
@@ -139,8 +140,9 @@ The product sells saved orders, not an "AI bot".
 - Python voice-agent exposes `GET /health`, `POST /stt/transcribe`, and
   `POST /stt/transcribe-and-emit`.
 - Mock STT provider is the default and returns typed text as transcript without external APIs.
-- Optional Deepgram provider sends uploaded audio to Deepgram's pre-recorded Listen API with
-  experimental `language=multi&model=nova-3` settings for RU/KZ testing.
+- Optional Deepgram provider sends uploaded audio to Deepgram's pre-recorded Listen API. The MVP
+  default is `deepgram-ru-nova2` for Russian-first behavior; `deepgram-ru-nova3` and
+  `deepgram-multi-nova3` remain experimental.
 - Voice-agent emits `call_started`, `transcript_updated`, and `call_ended` payloads to the existing
   Next.js self-host webhook.
 - Dev page `/dev/selfhost-stt` records short browser microphone clips for upload and has a typed
@@ -174,9 +176,10 @@ The product sells saved orders, not an "AI bot".
   `/stt/transcribe-and-emit`; `npm run selfhost:stt-file` tests prerecorded synthetic audio files.
 - `GET /health` returns safe service/provider/mode/backend URL diagnostics and does not expose
   secrets.
-- Manual STT results: RU urgent plumbing was best on `deepgram-ru-nova2` with score 89; KZ and mixed
-  RU/KZ samples are not production-ready; gas/safety samples are not reliable enough for confident
-  automation.
+- Exported STT results: `deepgram-ru-nova2` scored 100/high on RU urgent plumbing, 100/high on
+  noisy fallback, 90/high on electric danger, and 74/medium on gas emergency. Gas is detected but
+  remains `safety_low_confidence` unless score is at least 80. KZ-only and mixed RU/KZ samples are
+  unusable with current Deepgram settings and must remain callback-required fallback.
 - Self-host low-confidence call-end events no longer create confident normal leads. Weak but useful
   calls become `CALLBACK_PENDING` leads with a Telegram callback warning, while empty calls without
   useful signal or caller phone are logged as `NO_LEAD`.
@@ -246,6 +249,6 @@ The product sells saved orders, not an "AI bot".
 ## Next Step
 
 Research alternative STT providers for Kazakh and RU/KZ code switching: Google Speech-to-Text, Azure
-Speech, Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable STT. Keep Vapi
-available as the fallback while the self-host spike proves RU/KZ quality; real phone number testing
-comes after the local STT plus extraction pipeline works.
+Speech, Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable STT. Keep Vapi
+available as the fallback while the self-host spike proves Russian-first quality and finds a reliable
+KZ/MIX path; real phone number testing comes after the local STT plus extraction pipeline works.

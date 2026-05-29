@@ -1,5 +1,14 @@
 # Wiki Operation Log
 
+## 2026-05-30
+
+- Recorded exported STT benchmark conclusions: `deepgram-ru-nova2` is the Russian-first MVP default
+  with 100/high RU urgent plumbing, 100/high noisy fallback, 90/high electric danger, and 74/medium
+  gas emergency. Gas remains `safety_low_confidence` unless score is at least 80.
+- Marked KZ-only and mixed RU/KZ as callback-required fallback with current Deepgram settings. Do
+  not claim reliable Kazakh support yet. Next provider benchmark: Google Speech-to-Text, Azure
+  Speech, Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable STT.
+
 ## 2026-05-27
 
 - Added noise-aware LLM lead extraction for self-host voice transcripts: strict
@@ -7,12 +16,11 @@
   deterministic safety merge, callback-required low-confidence policy, and Telegram `AI-выжимка`
   warnings with missing fields/background-speech caveat. Added fixtures/tests for clean RU, very
   noisy RU, spouse/background speech, hello-only noise, and noisy gas.
-- Tuned self-host STT based on manual Deepgram results: `deepgram-ru-nova2` is now the MVP default,
-  RU worked best, KZ/MIX is not production-ready, and gas/safety confidence is insufficient for
-  confident automation. Empty `/stt/experiment` transcripts now return safe scored HTTP 200 results,
-  low-confidence thresholds are explicit, `/dev/selfhost-stt` records result history with
-  Markdown/JSON export and best usable mode recommendations, and low-confidence self-host calls now
-  become callback-required leads or `NO_LEAD` instead of confident normal leads.
+- Tuned self-host STT based on manual Deepgram results before the exported summary: empty
+  `/stt/experiment` transcripts now return safe scored HTTP 200 results, low-confidence thresholds
+  are explicit, `/dev/selfhost-stt` records result history with Markdown/JSON export and best usable
+  mode recommendations, and low-confidence self-host calls now become callback-required leads or
+  `NO_LEAD` instead of confident normal leads.
 - Next STT research targets Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex
   SpeechKit if viable, and other Kazakh-capable providers.
 

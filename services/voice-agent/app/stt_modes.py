@@ -46,8 +46,8 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         language="multi",
         options=DEEPGRAM_COMMON_OPTIONS,
         description=(
-            "Deepgram nova-3 with language=multi. Kept for RU/KZ code-switching research; "
-            "manual results were not production-ready."
+            "Experimental Deepgram nova-3 with language=multi. Kept for RU/KZ code-switching "
+            "research; current KZ/MIX results are unusable."
         ),
     ),
     "deepgram-ru-nova3": SttModeConfig(
@@ -56,7 +56,7 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         model="nova-3",
         language="ru",
         options=DEEPGRAM_COMMON_OPTIONS,
-        description="Russian-only Deepgram nova-3 baseline for Kazakhstan Russian callers.",
+        description="Experimental Russian-only Deepgram nova-3 baseline for Kazakhstan Russian callers.",
     ),
     "deepgram-ru-nova2": SttModeConfig(
         name="deepgram-ru-nova2",
@@ -64,7 +64,7 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         model="nova-2",
         language="ru",
         options=DEEPGRAM_COMMON_OPTIONS,
-        description="MVP default STT mode after manual RU tests; Russian-only Deepgram nova-2.",
+        description="MVP default / recommended STT mode; Russian-first Deepgram nova-2.",
     ),
     "deepgram-default": SttModeConfig(
         name="deepgram-default",
@@ -72,7 +72,7 @@ STT_MODE_CONFIGS: dict[str, SttModeConfig] = {
         model=None,
         language=None,
         options=DEEPGRAM_COMMON_OPTIONS,
-        description="Deepgram request with no explicit model or language; API defaults are used.",
+        description="Not recommended: Deepgram request with no explicit model or language often returns empty transcripts.",
     ),
 }
 

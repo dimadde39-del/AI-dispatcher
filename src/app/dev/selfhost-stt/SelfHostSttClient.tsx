@@ -98,6 +98,12 @@ const VOICE_AGENT_FIX = "Run npm run voice-agent:dev and open http://localhost:8
 const MEDIA_RECORDER_WARNING =
   "This browser/context does not support MediaRecorder. Use Chrome/Edge on localhost, or use file upload/mock transcript.";
 const DEFAULT_STT_MODE = "deepgram-ru-nova2";
+const MODE_STATUS_LABELS: Record<string, string> = {
+  "deepgram-ru-nova2": "MVP default / recommended",
+  "deepgram-ru-nova3": "experimental",
+  "deepgram-multi-nova3": "experimental",
+  "deepgram-default": "not recommended / often empty",
+};
 
 const FALLBACK_MODES: SttMode[] = [
   {
@@ -114,7 +120,7 @@ const FALLBACK_MODES: SttMode[] = [
     model: "nova-2",
     language: "ru",
     options: { punctuate: true, smart_format: true },
-    description: "MVP default: Russian-only Deepgram nova-2.",
+    description: "MVP default / recommended: Russian-first Deepgram nova-2.",
   },
   {
     id: "deepgram-ru-nova3",
@@ -122,7 +128,7 @@ const FALLBACK_MODES: SttMode[] = [
     model: "nova-3",
     language: "ru",
     options: { punctuate: true, smart_format: true },
-    description: "Russian-only Deepgram nova-3 baseline.",
+    description: "Experimental Russian-only Deepgram nova-3 baseline.",
   },
   {
     id: "deepgram-multi-nova3",
@@ -130,7 +136,7 @@ const FALLBACK_MODES: SttMode[] = [
     model: "nova-3",
     language: "multi",
     options: { punctuate: true, smart_format: true },
-    description: "Deepgram nova-3 with language=multi for RU/KZ research.",
+    description: "Experimental RU/KZ research mode; current KZ/MIX results are unusable.",
   },
   {
     id: "deepgram-default",
@@ -138,7 +144,7 @@ const FALLBACK_MODES: SttMode[] = [
     model: null,
     language: null,
     options: { punctuate: true, smart_format: true },
-    description: "Deepgram API defaults with punctuation and smart formatting.",
+    description: "Not recommended: Deepgram API defaults often return empty transcripts.",
   },
 ];
 
@@ -381,6 +387,12 @@ function isMediaRecorderAvailable(): boolean {
       typeof navigator.mediaDevices?.getUserMedia === "function" &&
       typeof MediaRecorder !== "undefined",
   );
+}
+
+function sttModeOptionLabel(mode: SttMode): string {
+  const statusLabel = MODE_STATUS_LABELS[mode.id];
+
+  return statusLabel ? `${mode.id} (${statusLabel})` : mode.id;
 }
 
 export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientProps) {
@@ -805,6 +817,7 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
   const experimentScore = experimentResult?.score;
   const experimentConfidence = experimentResult?.confidence;
   const experimentUsable = experimentResult?.usable;
+  const selectedModeStatus = MODE_STATUS_LABELS[selectedModeConfig.id];
   const serviceBadgeClass = serviceStatus.state === "online" ? "badge badge-success" : "badge badge-warning";
   const serviceStatusLabel =
     serviceStatus.state === "checking" ? "checking" : serviceStatus.state === "online" ? "online" : "offline";
@@ -814,7 +827,7 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
       <div className="page-header">
         <div className="page-title">
           <h1>Self-host STT experiment</h1>
-          <p>RU/KZ transcription comparison for the Python voice-agent spike.</p>
+          <p>Russian-first STT comparison. KZ/MIX remains callback-required fallback, not reliable production support.</p>
         </div>
       </div>
 
@@ -900,7 +913,7 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
               <select id="stt-mode" value={selectedMode} onChange={(event) => setSelectedMode(event.target.value)}>
                 {modes.map((mode) => (
                   <option key={mode.id} value={mode.id}>
-                    {mode.id}
+                    {sttModeOptionLabel(mode)}
                   </option>
                 ))}
               </select>
@@ -910,6 +923,13 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
             {selectedModeConfig.provider}
             {selectedModeConfig.model ? ` / ${selectedModeConfig.model}` : ""}
             {selectedModeConfig.language ? ` / ${selectedModeConfig.language}` : ""}
+            {selectedModeStatus ? ` - ${selectedModeStatus}` : ""}
+            {selectedModeConfig.description ? (
+              <>
+                <br />
+                {selectedModeConfig.description}
+              </>
+            ) : null}
           </p>
           <div className="actions">
             <button type="button" onClick={startRecording} disabled={startDisabled}>

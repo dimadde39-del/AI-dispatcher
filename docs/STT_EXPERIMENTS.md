@@ -12,32 +12,34 @@ Configured in `services/voice-agent/app/stt_modes.py`:
 | Mode | Provider | Model | Language | Notes |
 | --- | --- | --- | --- | --- |
 | `mock` | mock | none | none | Text passthrough for local scoring and emit checks. |
-| `deepgram-ru-nova2` | Deepgram | `nova-2` | `ru` | MVP default after manual RU testing. |
-| `deepgram-ru-nova3` | Deepgram | `nova-3` | `ru` | Russian-only nova-3 baseline. |
-| `deepgram-multi-nova3` | Deepgram | `nova-3` | `multi` | RU/KZ code-switching research mode; not production-ready. |
-| `deepgram-default` | Deepgram | not sent | not sent | Lets Deepgram choose defaults. |
+| `deepgram-ru-nova2` | Deepgram | `nova-2` | `ru` | MVP default / recommended for Russian-first MVP behavior. |
+| `deepgram-ru-nova3` | Deepgram | `nova-3` | `ru` | Experimental Russian-only baseline. |
+| `deepgram-multi-nova3` | Deepgram | `nova-3` | `multi` | Experimental RU/KZ code-switching research mode; not production-ready. |
+| `deepgram-default` | Deepgram | not sent | not sent | Not recommended; exported runs often return empty transcripts. |
 
-Current decision: default MVP STT mode is `deepgram-ru-nova2`. RU works best in the manual samples.
-KZ and mixed RU/KZ are not production-ready, and gas/safety detection is not reliable enough for
-confident automation.
+Current decision: the MVP voice language is Russian-first, with `deepgram-ru-nova2` as the default
+STT mode. Do not claim reliable Kazakh support yet. KZ-only and mixed RU/KZ calls are
+callback-required fallback until a better provider or configuration is proven.
 
-## Manual Results, May 2026
+## Exported Result Summary, May 2026
 
-| Scenario | Mode | Score | Missed keywords / result |
-| --- | --- | ---: | --- |
-| RU urgent plumbing | `deepgram-ru-nova2` | 89 | missed `труба` |
-| RU urgent plumbing | `deepgram-ru-nova3` | 66 | missed `труба`, `Шымкент`, `Нурсат` |
-| RU urgent plumbing | `deepgram-multi-nova3` | 54 | missed `труба`, `течет`, `Шымкент`, `Нурсат` |
-| RU urgent plumbing | `deepgram-default` | 0 | empty transcript |
-| KZ water leak | `deepgram-multi-nova3` | 23 | missed `ағып`, `жатыр`, `Шымкент`, `Тұран`, `тезірек` |
-| KZ water leak | `deepgram-ru-nova3` | 0 | empty transcript |
-| KZ water leak | `deepgram-ru-nova2` | 0 | empty transcript |
-| MIX RU/KZ water leak | `deepgram-ru-nova3` | 50 | missed `ағып`, `Шымкент`, `Тұран`, `тезірек` |
-| MIX RU/KZ water leak | `deepgram-multi-nova3` | 20 | missed `су`, `ағып`, `течь`, `Шымкент`, `Тұран`, `этаж`, `тезірек` |
-| MIX RU/KZ water leak | `deepgram-ru-nova2` | 0 | empty transcript |
-| GAS emergency | `deepgram-multi-nova3` | 58 | missed `иісі`, `Шымкент` |
-| GAS emergency | `deepgram-ru-nova3` | 58 | missed `иісі`, `Шымкент` |
-| GAS emergency | `deepgram-ru-nova2` | 42 | missed `иісі`, `Шымкент`, `Нурсат` |
+| Scenario / scope | Mode | Score | Confidence | MVP conclusion |
+| --- | --- | ---: | --- | --- |
+| RU urgent plumbing | `deepgram-ru-nova2` | 100 | high | Best MVP default evidence. |
+| Noisy/unclear fallback phrase | `deepgram-ru-nova2` | 100 | high | Handles noisy Russian fallback sample. |
+| ELECTRIC danger | `deepgram-ru-nova2` | 90 | high | Electric danger works well in Russian. |
+| GAS emergency | `deepgram-ru-nova2` | 74 | medium | Gas is detected, but remains `safety_low_confidence` until score is at least 80. |
+| KZ-only speech | current Deepgram settings | unusable | unusable | Callback-required fallback; not production-ready. |
+| MIX RU/KZ speech | current Deepgram settings | unusable | unusable | Callback-required fallback; not production-ready. |
+| Deepgram defaults | `deepgram-default` | 0 | unusable | Not recommended; consistently returns empty transcripts in exports. |
+
+Mode conclusion:
+
+- Use `deepgram-ru-nova2` as the Russian-first MVP default and recommended Deepgram mode.
+- Keep `deepgram-ru-nova3` and `deepgram-multi-nova3` as experimental comparison modes only.
+- Do not recommend `deepgram-default`; it often returns empty transcripts.
+- Do not claim reliable Kazakh support yet. KZ-only and mixed RU/KZ behavior needs another provider
+  benchmark or a proven configuration before production use.
 
 ## Setup
 
@@ -157,7 +159,7 @@ Compare by scenario and mode:
 - Whether Kazakh characters survive in KZ/MIX phrases.
 - Whether emergency trigger words survive for gas/electric danger.
 - Confidence and callback policy: score `< 60` adds `low_confidence`, score `< 40` is unusable,
-  empty transcript is unusable, and safety scenarios below `80` add `safety_low_confidence`.
+  empty transcript is unusable, and gas/safety scenarios below `80` add `safety_low_confidence`.
 
 ## Pass/Fail
 
@@ -186,6 +188,12 @@ Downstream lead handling must not create a confident normal lead from low-confid
 Weak but useful calls become `CALLBACK_PENDING`; empty calls without useful signal or caller phone
 are logged as `NO_LEAD`.
 
+The required fallback thresholds remain:
+
+- Score `< 60` is callback-required.
+- Gas or other safety score `< 80` is `safety_low_confidence` and callback-required even when the
+  danger keyword is detected.
+
 ## Noisy Transcript Cleanup
 
 Real call transcripts are expected to contain noise, side conversations, profanity, repeated
@@ -201,14 +209,14 @@ Low confidence is a routing state, not an automatic discard. Useful but noisy ca
 callback-required incomplete leads. Only empty/unusable transcripts without useful signal and without
 caller phone should become `NO_LEAD`.
 
-## Next Research
+## Next Research TODO
 
-Evaluate alternative RU/KZ-capable STT before production self-host automation:
+Benchmark alternative RU/KZ-capable STT before production self-host automation:
 
 - Google Speech-to-Text.
 - Azure Speech.
 - Whisper or faster-whisper.
-- Yandex SpeechKit if viable.
+- Yandex/SpeechKit if viable.
 - Other Kazakh-capable STT providers.
 
 ## Next Gate

@@ -11,7 +11,9 @@ Application code should not depend directly on Vapi SDKs, webhook payload shapes
 Vapi first means the initial integration should prioritize reliability, webhooks, transcripts, recordings, and speed to pilot. It does not mean Vapi concepts are allowed into domain or application code.
 
 Self-host voice means future margin optimization and deeper voice control. It is a spike only until
-RU/KZ STT quality, latency, and end-of-call lead quality beat the hosted path.
+Russian-first STT quality, latency, and end-of-call lead quality beat the hosted path. Do not claim
+reliable Kazakh support yet; KZ-only and mixed RU/KZ calls are callback-required fallback until a
+provider benchmark proves production quality.
 
 ## Adapter Responsibilities
 
@@ -126,11 +128,13 @@ POST /stt/transcribe
 POST /stt/transcribe-and-emit
 ```
 
-The mock provider is the default and costs nothing. The optional Deepgram provider uses the
-pre-recorded Listen API and experimental `language=multi&model=nova-3` settings for RU/KZ testing.
-Do not treat Deepgram quality as proven until recorded RU, KZ, and mixed speech are compared against
-Vapi. `npm run vapi:recent` only inspects Vapi calls; self-host verification should use admin
-calls/leads, Telegram, and Supabase rows where `provider = self-host`.
+The mock provider is the zero-cost local path. The recommended MVP Deepgram mode is
+`deepgram-ru-nova2` for Russian-first behavior. `deepgram-ru-nova3` and
+`deepgram-multi-nova3` remain experimental, and `deepgram-default` is not recommended because
+exported runs often returned empty transcripts. KZ-only and mixed RU/KZ results are not
+production-ready with current Deepgram settings. `npm run vapi:recent` only inspects Vapi calls;
+self-host verification should use admin calls/leads, Telegram, and Supabase rows where
+`provider = self-host`.
 
 ## Webhook Secret
 

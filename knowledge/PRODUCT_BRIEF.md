@@ -40,6 +40,11 @@ The master should feel that AI Dispatcher quietly protects revenue while they ar
 
 Raw source framing: the strongest demo is not "AI talked"; it is "this order would have gone to the next OLX listing, and now the master has a qualified Telegram lead."
 
+## Language Support Warning
+
+MVP voice behavior is Russian-first. Do not claim reliable Kazakh support yet; KZ-only and mixed
+RU/KZ calls are callback-required fallback until a provider benchmark proves production quality.
+
 ## Non-Goals For Now
 
 - Customer-facing marketplace.

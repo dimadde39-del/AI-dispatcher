@@ -28,10 +28,10 @@ File test:
 
 Modes:
   mock
-  deepgram-ru-nova2 (default)
-  deepgram-ru-nova3
-  deepgram-multi-nova3
-  deepgram-default
+  deepgram-ru-nova2 (MVP default / recommended)
+  deepgram-ru-nova3 (experimental)
+  deepgram-multi-nova3 (experimental)
+  deepgram-default (not recommended / often empty)
 
 PowerShell audio upload example:
   curl.exe -X POST "${url}" -F "scenarioId=ru-urgent-plumbing" -F "mode=${DEFAULT_STT_MODE}" -F "file=@C:\\path\\sample.webm;type=audio/webm"

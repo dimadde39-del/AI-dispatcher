@@ -67,6 +67,15 @@ x-self-host-voice-secret: <secret>
 - End-of-call lead quality is acceptable.
 - No regression in the Telegram/admin pipeline.
 
+## MVP Behavior After STT Export
+
+The MVP voice language is Russian-first. The current Deepgram evidence supports
+`deepgram-ru-nova2` as the recommended default for Russian calls, not as proof of reliable Kazakh
+support.
+
+KZ-only and mixed RU/KZ calls are callback-required fallback. They are not production-ready with the
+current Deepgram settings, and product or sales docs must not claim reliable Kazakh support yet.
+
 ## Local Simulation
 
 Dry-run without writing to Supabase or sending Telegram:
@@ -160,9 +169,11 @@ DEEPGRAM_API_KEY=...
 ```
 
 The named mode assumptions live in `services/voice-agent/app/stt_modes.py`. The current MVP default
-is `deepgram-ru-nova2`. Manual results showed RU performs best there; KZ and mixed RU/KZ are not
-production-ready, and gas/safety confidence is insufficient for confident automation. The
-`deepgram-multi-nova3` mode remains a research comparison, not the default.
+is `deepgram-ru-nova2`. Exported results scored it at 100/high for RU urgent plumbing, 100/high for
+the noisy fallback phrase, 90/high for electric danger, and 74/medium for gas emergency. Gas is
+detected, but remains `safety_low_confidence` until the score is at least 80. The
+`deepgram-ru-nova3` and `deepgram-multi-nova3` modes remain experimental comparisons, not defaults.
+`deepgram-default` is not recommended because exported runs often returned empty transcripts.
 
 Important caveat: Deepgram's current model/language overview clearly lists Russian for Nova-3, but
 Kazakh is not clearly listed there. RU/KZ mixed quality must be measured with real recordings before
@@ -173,7 +184,8 @@ Low-confidence behavior is required before any self-host production use:
 - `/stt/experiment` returns empty transcripts as HTTP 200 scored results with `score: 0`,
   `confidence: "unusable"`, `usable: false`, and callback-required warnings.
 - Score `< 60` is low confidence; score `< 40` is unusable.
-- Gas/electric safety scenarios below 80 add `safety_low_confidence`.
+- Gas/electric safety scenarios below 80 add `safety_low_confidence`; gas remains low-confidence
+  safety handling unless the score is at least 80.
 - Low-confidence self-host call-end events create only `CALLBACK_PENDING` leads when there is useful
   signal or a caller phone; empty calls without useful signal become `NO_LEAD`.
 
@@ -215,6 +227,5 @@ calls with no useful signal and no caller phone become `NO_LEAD`.
 - Supabase `calls.provider = self-host`
 
 Detailed manual experiment steps and observed score tables are in `docs/STT_EXPERIMENTS.md`. Next
-research should compare Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex
-SpeechKit if viable, and other Kazakh-capable STT before adding any realtime self-host response
-LLM/TTS loop.
+research TODO: compare Google Speech-to-Text, Azure Speech, Whisper/faster-whisper, Yandex/SpeechKit
+if viable, and other Kazakh-capable STT before adding any realtime self-host response LLM/TTS loop.

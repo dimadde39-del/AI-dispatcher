@@ -38,8 +38,9 @@ simulate Vapi fixture payloads without live Vapi credentials.
 self-host dry-runs can run without it outside production.
 `STT_PROVIDER`, `STT_MODE`, and `DEEPGRAM_API_KEY` are used by the Python voice-agent for local STT
 experiments. Deepgram live calls are optional and should be run only when intentionally comparing
-paid STT modes. The current MVP default mode is `STT_MODE=deepgram-ru-nova2`; KZ and mixed RU/KZ STT
-remain research-only.
+paid STT modes. The current MVP default mode is `STT_MODE=deepgram-ru-nova2` for Russian-first
+behavior. Do not claim reliable Kazakh support yet; KZ-only and mixed RU/KZ STT remain
+callback-required fallback.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` is safe for browser use and defaults to
@@ -432,7 +433,8 @@ STT_LANGUAGE_MODE=ru-kk
 ```
 
 Named STT modes are configured in `services/voice-agent/app/stt_modes.py`: `mock`,
-`deepgram-ru-nova2`, `deepgram-ru-nova3`, `deepgram-multi-nova3`, and `deepgram-default`.
+`deepgram-ru-nova2` (MVP default / recommended), `deepgram-ru-nova3` (experimental),
+`deepgram-multi-nova3` (experimental), and `deepgram-default` (not recommended / often empty).
 `STT_PROVIDER=deepgram` still works for the legacy env-driven path, while `STT_MODE` selects a named
 experiment mode.
 
@@ -448,10 +450,11 @@ not fatal errors: they return `score: 0`, `confidence: "unusable"`, `usable: fal
 callback-required warnings. Score `< 60` is low confidence, score `< 40` is unusable, and safety
 scenarios below 80 add `safety_low_confidence`.
 
-Manual STT results currently set the default to `deepgram-ru-nova2`: RU urgent plumbing scored 89,
-while KZ/MIX samples were not production-ready and gas/safety samples were not reliable enough for
-confident automation. Next STT research should compare Google Speech-to-Text, Azure Speech,
-Whisper/faster-whisper, Yandex SpeechKit if viable, and other Kazakh-capable providers.
+Exported STT results set the default to `deepgram-ru-nova2`: RU urgent plumbing scored 100/high,
+noisy fallback scored 100/high, electric danger scored 90/high, and gas emergency scored 74/medium.
+Gas is detected but remains `safety_low_confidence` unless score is at least 80. KZ/MIX samples are
+not production-ready. Next STT research TODO: compare Google Speech-to-Text, Azure Speech,
+Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable providers.
 
 Useful helpers:
 
@@ -497,7 +500,9 @@ ENABLE_DEV_VAPI_WEB_CALL=true
 The page starts assistant `cc79d655-ed1f-47fb-ab03-a55558e8f48a` with `vapi.start(...)` and stops
 with `vapi.stop()`. A Web Call may still require Vapi billing/payment even without a phone number.
 
-Use it to test RU/KZ/mixed speech, emergency handling, price refusal, and repair-advice refusal.
+Use it to test Russian-first speech, KZ/MIX fallback behavior, emergency handling, price refusal,
+and repair-advice refusal. Do not treat KZ/MIX success in this page as reliable Kazakh production
+support until a provider benchmark proves it.
 After a call, verify `npm run vapi:recent`, `/admin/calls`, `/admin/leads`, and Telegram card
 delivery.
 
