@@ -32,6 +32,13 @@ Modes:
   deepgram-ru-nova3 (experimental)
   deepgram-multi-nova3 (experimental)
   deepgram-default (not recommended / often empty)
+  google-kk (experimental Kazakh benchmark; GOOGLE_STT_ENABLED + credentials)
+  google-ru (experimental; GOOGLE_STT_ENABLED + credentials)
+  google-ru-kk-auto (experimental RU/KZ benchmark; Google alternativeLanguageCodes)
+  azure-kk (experimental Kazakh benchmark; AZURE_STT_ENABLED + key/region; WAV/OGG uploads)
+  azure-ru (experimental; AZURE_STT_ENABLED + key/region; WAV/OGG uploads)
+  azure-ru-kk-auto (visible skeleton, disabled)
+  whisper-local (visible skeleton, disabled)
 
 PowerShell audio upload example:
   curl.exe -X POST "${url}" -F "scenarioId=ru-urgent-plumbing" -F "mode=${DEFAULT_STT_MODE}" -F "file=@C:\\path\\sample.webm;type=audio/webm"
@@ -40,4 +47,5 @@ Mock scoring example:
   curl.exe -X POST "${url}" -H "content-type: application/json" -d "{\\"scenarioId\\":\\"ru-urgent-plumbing\\",\\"mode\\":\\"mock\\",\\"text\\":\\"truba test\\"}"
 
 Deepgram modes require DEEPGRAM_API_KEY in services/voice-agent/.env. This is an STT-only experiment.
+Google/Azure/Whisper modes are optional and disabled until their env/dependency requirements are met.
 `);

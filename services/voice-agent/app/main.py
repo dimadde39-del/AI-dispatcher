@@ -10,7 +10,7 @@ from .config import load_settings
 from .events import build_stt_emit_events
 from .health import allowed_origins, build_health_response
 from .stt import SttError, SttResult, transcribe_with_provider
-from .stt_modes import list_stt_mode_configs
+from .stt_modes import STT_PROVIDER_ORDER, list_public_stt_modes
 from .stt_scenarios import get_stt_scenario, list_stt_scenarios
 from .stt_scoring import score_transcript
 
@@ -37,8 +37,10 @@ def health() -> dict[str, object]:
 
 @app.get("/stt/modes")
 def stt_modes() -> dict[str, object]:
+    settings = load_settings()
     return {
-        "modes": [mode.to_public_dict() for mode in list_stt_mode_configs()],
+        "modes": list_public_stt_modes(settings),
+        "providerOrder": STT_PROVIDER_ORDER,
     }
 
 

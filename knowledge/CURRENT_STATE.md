@@ -10,7 +10,8 @@ response loop and TTS remain deferred.
 
 The initial Next.js 15 App Router foundation is in place with TypeScript, Supabase Postgres migrations, domain schemas, repository boundaries, application use cases, seed data, tests, and an internal admin UI skeleton. Telegram lead-card delivery is now wired behind infrastructure adapters.
 
-Raw product docs are stored in `knowledge/raw/` and must be treated as canonical source material.
+Raw product docs are stored in `knowledge/raw/` as preserved historical source material. Current
+sequencing is defined by accepted ADRs and `knowledge/PRODUCT_STRATEGY.md`.
 
 ## Product Direction
 
@@ -18,13 +19,20 @@ AI Dispatcher is a SaaS for Kazakhstan field service masters. It captures missed
 
 The product sells saved orders, not an "AI bot".
 
+AI Dispatcher is the narrow market-entry wedge. Tamyz is the larger later vision, but it is not
+being built from day zero. Dispatcher must first generate revenue, master relationships,
+supply-side trust, and field evidence.
+
+The planned production voice direction is self-host. Existing Vapi code is retained only as legacy
+benchmark or contingency tooling; roadmap and pilot economics must not assume a Vapi-first phase.
+
 ## Active Surfaces
 
 - Backend/API.
 - Internal admin UI.
 - Supabase database.
 - Telegram master interface.
-- Vapi webhook integration foundation.
+- Legacy Vapi benchmark/contingency webhook foundation.
 - Self-host voice provider spike foundation.
 
 ## Deferred Surfaces
@@ -33,6 +41,7 @@ The product sells saved orders, not an "AI bot".
 - Customer-facing marketplace.
 - Customer-facing landing.
 - Billing provider integration.
+- Tamyz implementation.
 - Production self-host voice telephony/SIP.
 - Squad mode.
 - WhatsApp/SMS client notifications.
@@ -43,7 +52,9 @@ The product sells saved orders, not an "AI bot".
 - Use layered architecture: domain, application, infrastructure, app API, app admin.
 - Supabase Postgres is the initial database foundation.
 - Telegram is the primary master interface for pilots.
-- Vapi integration must stay behind a voice-provider abstraction.
+- Voice integrations must stay behind a voice-provider abstraction.
+- Self-host is the planned production direction. Retained Vapi code is legacy benchmark or
+  contingency tooling only.
 - Provider raw payloads should be stored for debugging and audit.
 - Product code now follows the `src/domain`, `src/application`, `src/infrastructure`, `src/app/api`, and `src/app/admin` structure.
 
@@ -101,7 +112,7 @@ The product sells saved orders, not an "AI bot".
   sent, the Telegram accept button changed Supabase status to `ACCEPTED`, and a
   `TELEGRAM_LEAD_CALLBACK_HANDLED` event was written after the Telegram card edit/answer path.
 
-## Implemented Vapi Webhook Foundation
+## Implemented Legacy Vapi Benchmark/Contingency Foundation
 
 - Provider-neutral `VoiceEvent` types for `CALL_STARTED`, `CALL_ENDED`, `TRANSCRIPT_UPDATED`, and
   `UNKNOWN`.
@@ -121,9 +132,10 @@ The product sells saved orders, not an "AI bot".
 - Local fixture simulation is available through `npm run vapi:simulate`; readiness checks are
   available through `npm run vapi:ready`.
 
-## Implemented Self-Host Voice Spike Foundation
+## Implemented Self-Host Voice Foundation
 
-- ADR 0006 records the decision to start a self-host voice spike while keeping Vapi as a fallback.
+- ADR 0006 records why the self-host spike started. ADR 0007 supersedes its sequencing assumption
+  and selects self-host as the production direction.
 - Provider-neutral `VoiceProviderName` now includes `self-host` alongside `vapi`.
 - Self-host infrastructure adapter parses internal `call_started`, `transcript_updated`,
   `call_ended`, and unknown event payloads into normalized `VoiceEvent` values.
@@ -154,11 +166,13 @@ The product sells saved orders, not an "AI bot".
 ## Implemented Self-Host STT Experiment Framework
 
 - Named STT modes exist for `mock`, `deepgram-ru-nova2`, `deepgram-ru-nova3`,
-  `deepgram-multi-nova3`, and `deepgram-default`.
+  `deepgram-multi-nova3`, `deepgram-default`, `google-kk`, `google-ru`,
+  `google-ru-kk-auto`, `azure-kk`, `azure-ru`, `azure-ru-kk-auto`, and `whisper-local`.
 - `STT_PROVIDER` still works for the legacy mock/deepgram path; `STT_MODE` selects a named
   experiment mode. Default `STT_MODE` is now `deepgram-ru-nova2`.
 - Shared STT scenarios live in `services/voice-agent/app/stt_scenarios.py` for RU urgent plumbing,
-  KZ water leak, mixed RU/KZ water leak, gas emergency, electric danger, and noisy fallback phrases.
+  KZ water leak, mixed RU/KZ water leak, fast/noisy Shymkent KZ and RU/KZ mix, gas emergency,
+  electric danger, and noisy fallback phrases.
 - `POST /stt/experiment` transcribes one sample, scores keyword hits/misses, detects Cyrillic/Kazakh
   signals, flags likely wrong-language transcripts, and returns warnings, confidence, usability, and
   callback-required fields.
@@ -180,6 +194,12 @@ The product sells saved orders, not an "AI bot".
   noisy fallback, 90/high on electric danger, and 74/medium on gas emergency. Gas is detected but
   remains `safety_low_confidence` unless score is at least 80. KZ-only and mixed RU/KZ samples are
   unusable with current Deepgram settings and must remain callback-required fallback.
+- Google Speech-to-Text and Azure Speech upload benchmark providers are wired as optional candidates
+  for Kazakh rescue testing. Missing credentials disable those modes cleanly. `azure-ru-kk-auto` and
+  `whisper-local` are visible skeleton modes only.
+- KZ/MIX scoring now includes Shymkent/Nursat/Turan/water/leak/plumbing aliases, latinized Kazakh
+  warnings, and mostly non-Cyrillic KZ callback handling. Alias hits are research evidence, not
+  production Kazakh support.
 - Self-host low-confidence call-end events no longer create confident normal leads. Weak but useful
   calls become `CALLBACK_PENDING` leads with a Telegram callback warning, while empty calls without
   useful signal or caller phone are logged as `NO_LEAD`.
@@ -202,7 +222,7 @@ The product sells saved orders, not an "AI bot".
 - Low confidence is not an automatic discard: useful signal or a caller phone creates an incomplete
   `CALLBACK_PENDING` lead; empty/unusable calls with no useful signal and no phone become `NO_LEAD`.
 
-## Vapi Live Test Preparation
+## Legacy Vapi Benchmark/Contingency Preparation
 
 - Public Vapi Server URL for the pilot app is
   `https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi`.
@@ -242,13 +262,17 @@ The product sells saved orders, not an "AI bot".
 
 - Raw docs describe the wedge as missed-call capture for urgent field-service orders.
 - Raw docs emphasize local Kazakhstan telephony realities, especially avoiding foreign SIP numbers for forwarding.
-- Raw docs include a future Pipecat/self-host voice path, but that surface remains deferred.
-- Raw docs include future marketplace/squad ideas; those remain deferred until the supply base is strong.
+- Raw docs include historical Vapi-first sequencing. ADR 0007 supersedes it: self-host is the
+  planned production direction.
+- Raw docs include future marketplace/squad ideas. These are possible inputs for later Tamyz
+  discovery, not current implementation requirements.
 - Raw file text appears encoding-garbled when read normally in the current shell; agents should preserve raw files and use careful read/recovery for summaries.
 
 ## Next Step
 
-Research alternative STT providers for Kazakh and RU/KZ code switching: Google Speech-to-Text, Azure
-Speech, Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable STT. Keep Vapi
-available as the fallback while the self-host spike proves Russian-first quality and finds a reliable
-KZ/MIX path; real phone number testing comes after the local STT plus extraction pipeline works.
+Run the manual Kazakh rescue STT benchmark against Google Speech-to-Text and Azure Speech modes,
+using the Shymkent KZ/MIX scenarios and the existing Deepgram baseline. Keep Whisper/faster-whisper
+as a documented local research path until a dependency/model plan is accepted. Continue the
+self-host path through realtime LLM/TTS and local SIP/PSTN validation only after the local STT plus
+extraction pipeline works. Use Vapi only as an optional comparison or emergency contingency, not as
+the planned pilot route.

@@ -6,16 +6,18 @@
 2. Telegram interface: lead card, callbacks, status updates. Done.
 3. Vapi webhook: call started/ended, transcript, recording. Done.
 4. Self-host voice spike: mock/browser STT path with RU/KZ language-routing control. Current.
-5. Configure Vapi assistant/phone number and run a real end-of-call report test as fallback path.
-6. Lead extraction: strict JSON, Zod validation, fallback.
-7. Reports: weekly value reminders.
-8. Pilot operations tooling.
+5. Run manual benchmark uploads for alternative KZ and mixed RU/KZ STT providers.
+6. Build the self-host realtime response LLM/TTS loop.
+7. Validate Kazakhstan-compatible SIP/PSTN forwarding and run real self-host call tests.
+8. Reports: weekly value reminders.
+9. Pilot operations tooling.
 
 ## Current Task
 
-Record the next STT provider benchmark. Keep `deepgram-ru-nova2` as the Russian-first MVP STT
-default, keep KZ/MIX as callback-required fallback, and do not add the self-host realtime response
-LLM/TTS loop until STT and extraction quality are proven.
+Run the Google/Azure Kazakh rescue STT provider benchmark. Keep `deepgram-ru-nova2` as the
+Russian-first MVP STT default, keep KZ/MIX as callback-required fallback, and prepare the self-host
+realtime response LLM/TTS loop only after STT and extraction quality are proven. Vapi is optional
+legacy benchmark or contingency tooling, not the planned pilot route.
 
 ## Done
 
@@ -81,16 +83,22 @@ LLM/TTS loop until STT and extraction quality are proven.
   provider boundary, strict Russian JSON prompt, deterministic-plus-LLM merge, Telegram
   `AI-выжимка` warning behavior, and fixtures/tests for clean, noisy, background, hello-only, and gas
   transcripts.
+- Optional Kazakh STT benchmark providers: Google modes (`google-kk`, `google-ru`,
+  `google-ru-kk-auto`), Azure modes (`azure-kk`, `azure-ru`), disabled skeletons
+  (`azure-ru-kk-auto`, `whisper-local`), provider availability metadata, Shymkent KZ/MIX scenarios,
+  alias scoring, and latinized/mostly non-Cyrillic warnings.
 
 ## Not Started Yet
 
 - Authentication.
 - Billing.
-- Live Vapi assistant/phone number configuration.
-- Real Vapi phone/Web SDK end-to-end assistant behavior validation.
+- Optional legacy Vapi benchmark/contingency validation only if it becomes useful.
 - Telegram `/start` onboarding.
-- Alternative STT provider benchmark for Kazakh and mixed RU/KZ: Google Speech-to-Text, Azure
-  Speech, Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable STT.
+- Manual audio benchmark results for Google Speech-to-Text and Azure Speech on Kazakh and mixed
+  RU/KZ scenarios.
+- Whisper/faster-whisper local dependency/model evaluation.
+- Yandex/SpeechKit or other Kazakh-capable STT providers if Google/Azure fail.
 - Real provider evaluation for LLM lead extraction with synthetic noisy recordings.
 - Self-host realtime response LLM and TTS loop.
 - Self-host SIP/PSTN integration.
+- Tamyz discovery and implementation after Dispatcher revenue, relationships, and field evidence.

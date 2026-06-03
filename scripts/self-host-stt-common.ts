@@ -53,6 +53,9 @@ export function audioContentTypeForPath(filePath: string): string {
   if (lower.endsWith(".webm")) {
     return "audio/webm";
   }
+  if (lower.endsWith(".ogg") || lower.endsWith(".opus")) {
+    return "audio/ogg";
+  }
 
   return "application/octet-stream";
 }

@@ -122,5 +122,5 @@ test("STT file helper maps common audio content types", () => {
   assert.equal(audioContentTypeForPath("sample.webm"), "audio/webm");
   assert.equal(audioContentTypeForPath("sample.wav"), "audio/wav");
   assert.equal(audioContentTypeForPath("sample.mp3"), "audio/mpeg");
-  assert.equal(audioContentTypeForPath("sample.ogg"), "application/octet-stream");
+  assert.equal(audioContentTypeForPath("sample.ogg"), "audio/ogg");
 });

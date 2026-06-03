@@ -1,19 +1,18 @@
 # Voice Providers
 
-Vapi is the first hosted voice-provider path. Self-host voice is now an explicit spike because the
-first live Vapi Web Call exposed RU/KZ reliability issues. Both providers must stay behind a
-`VoiceProvider` abstraction.
+Self-host voice is the planned production direction. The existing Vapi path is retained only as a
+legacy benchmark or contingency adapter. All voice components must stay behind provider-neutral
+boundaries.
 
 ## VoiceProvider Principle
 
 Application code should not depend directly on Vapi SDKs, webhook payload shapes, or provider-specific status names.
 
-Vapi first means the initial integration should prioritize reliability, webhooks, transcripts, recordings, and speed to pilot. It does not mean Vapi concepts are allowed into domain or application code.
-
-Self-host voice means future margin optimization and deeper voice control. It is a spike only until
-Russian-first STT quality, latency, and end-of-call lead quality beat the hosted path. Do not claim
-reliable Kazakh support yet; KZ-only and mixed RU/KZ calls are callback-required fallback until a
-provider benchmark proves production quality.
+Self-host first means new architecture, roadmap, and economics decisions should advance the
+self-host runtime. It does not mean the current runtime is already production-ready: Russian-first
+STT quality, latency, realtime LLM/TTS, SIP/PSTN, safety, and end-of-call lead quality still need
+validation. Do not claim reliable Kazakh support yet; KZ-only and mixed RU/KZ calls are
+callback-required fallback until a provider benchmark proves production quality.
 
 ## Adapter Responsibilities
 
@@ -23,7 +22,7 @@ provider benchmark proves production quality.
 - Capture transcript and recording references when available.
 - Surface errors as retry, failed, or manual-review states.
 
-## Current Vapi Webhook Foundation
+## Legacy Vapi Benchmark/Contingency Foundation
 
 Vapi Server URL should point to:
 
@@ -37,8 +36,9 @@ For the current deployed pilot app, use:
 https://ai-dispatcher-chi.vercel.app/api/webhooks/vapi
 ```
 
-The live setup checklist is maintained in `docs/VAPI_LIVE_SETUP.md`. Run
-`npm run vapi:live-ready` and `npm run vapi:live-checklist` before the first real Vapi call.
+The optional legacy setup checklist is maintained in `docs/VAPI_LIVE_SETUP.md`. Run
+`npm run vapi:live-ready` and `npm run vapi:live-checklist` only when intentionally comparing the
+legacy path or preparing contingency diagnostics.
 
 Assistant behavior can be reviewed locally with `npm run dispatcher:policy-tests`. This is a
 Russian-first RU/KZ checklist and does not call Vapi or require billing. Optional `npm run
@@ -46,7 +46,7 @@ vapi:chat-tests` uses the Vapi Chat API and requires `VAPI_API_KEY`; current Vap
 return `402` until billing/payment method is configured. Chat tests are not webhook, audio, STT, or
 telephony validation.
 
-For browser audio/STT validation without a phone number, use `/dev/vapi-web-call` with
+For optional legacy browser audio/STT comparison without a phone number, use `/dev/vapi-web-call` with
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY`. The page uses `@vapi-ai/web`, calls
 `vapi.start("cc79d655-ed1f-47fb-ab03-a55558e8f48a")`, and is disabled in production unless
 `ENABLE_DEV_VAPI_WEB_CALL=true`. Web Calls may still require Vapi billing/payment.
@@ -69,7 +69,7 @@ Vapi payloads are parsed defensively from `payload.message` when present, and fr
 when Vapi sends the message directly. Unknown event types are preserved and should not crash the
 webhook.
 
-## Self-Host Voice Spike
+## Self-Host Voice Path
 
 The self-host spike keeps the Next.js backend, Supabase, admin UI, and Telegram pipeline as the
 source of truth. A separate Python skeleton lives in:
@@ -113,7 +113,7 @@ npm run selfhost:simulate-gas -- --dry-run
 Without `--dry-run`, the simulator processes events through `handleVoiceEvent`, creates calls and
 leads when a master can be resolved, and sends Telegram lead cards only when Telegram is configured.
 
-Detailed spike notes are in `docs/SELF_HOST_VOICE_SPIKE.md`.
+Detailed implementation notes are in `docs/SELF_HOST_VOICE_SPIKE.md`.
 
 The browser upload STT milestone is available at:
 
@@ -132,9 +132,25 @@ The mock provider is the zero-cost local path. The recommended MVP Deepgram mode
 `deepgram-ru-nova2` for Russian-first behavior. `deepgram-ru-nova3` and
 `deepgram-multi-nova3` remain experimental, and `deepgram-default` is not recommended because
 exported runs often returned empty transcripts. KZ-only and mixed RU/KZ results are not
-production-ready with current Deepgram settings. `npm run vapi:recent` only inspects Vapi calls;
-self-host verification should use admin calls/leads, Telegram, and Supabase rows where
-`provider = self-host`.
+production-ready with current Deepgram settings.
+
+The self-host STT benchmark layer now exposes optional provider-based modes without replacing
+Deepgram:
+
+- Deepgram: `deepgram-ru-nova2` default, `deepgram-ru-nova3`, `deepgram-multi-nova3`,
+  `deepgram-default`.
+- Google Speech-to-Text: `google-kk`, `google-ru`, `google-ru-kk-auto`. These use `kk-KZ` and
+  `ru-RU` in the upload experiment path and are disabled unless Google STT is explicitly enabled and
+  configured.
+- Azure Speech: `azure-kk`, `azure-ru`. These use `kk-KZ` and `ru-RU` in the short-audio REST
+  upload path and are disabled unless Azure STT is explicitly enabled and configured.
+- Skeletons: `azure-ru-kk-auto` and `whisper-local` are visible research modes but disabled until
+  the heavier SDK/batch or local faster-whisper path is accepted.
+
+Provider credentials are optional. Missing credentials disable modes cleanly and should not crash the
+dev UI. `POST /stt/experiment` returns safe provider-unavailable errors if a disabled mode is posted
+directly. `npm run vapi:recent` only inspects Vapi calls; self-host verification should use admin
+calls/leads, Telegram, and Supabase rows where `provider = self-host`.
 
 ## Webhook Secret
 
@@ -188,8 +204,9 @@ confident normal leads; empty/unusable calls with no useful signal and no caller
 
 ## Deferred
 
-Self-host production telephony remains deferred. Do not add SIP/PSTN, Twilio, Zadarma, production
-deployment, or billing until the self-host spike passes the migration gates.
+Self-host production telephony implementation remains gated. Do not choose or hard-code SIP/PSTN,
+Twilio, Zadarma, production deployment, or billing until the self-host path passes the quality gates
+and Kazakhstan forwarding options are tested.
 
 ## Telephony Notes
 

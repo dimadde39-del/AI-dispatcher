@@ -19,5 +19,10 @@ def build_health_response(settings: Settings) -> dict[str, object]:
         "sttLanguageMode": settings.stt_language_mode,
         "backendBaseUrl": settings.backend_base_url,
         "deepgramConfigured": bool(settings.deepgram_api_key),
+        "googleSttEnabled": settings.google_stt_enabled,
+        "googleSttConfigured": bool(settings.google_stt_api_key or settings.google_application_credentials),
+        "azureSttEnabled": settings.azure_stt_enabled,
+        "azureSttConfigured": bool(settings.azure_speech_key and settings.azure_speech_region),
+        "whisperLocalEnabled": settings.whisper_local_enabled,
         "productionReady": False,
     }

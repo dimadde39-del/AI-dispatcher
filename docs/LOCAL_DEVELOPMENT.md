@@ -1,6 +1,6 @@
 # Local Development
 
-Current phase: product foundation built.
+Current phase: self-host Russian-first Dispatcher validation.
 
 The app now uses Next.js 15 App Router, TypeScript, Supabase Postgres, and Zod.
 
@@ -12,7 +12,7 @@ Copy `.env.example` to `.env.local` and fill:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 
-Optional future variables:
+Optional variables:
 
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_WEBHOOK_SECRET`
@@ -23,6 +23,13 @@ Optional future variables:
 - `STT_PROVIDER`
 - `STT_MODE`
 - `DEEPGRAM_API_KEY`
+- `GOOGLE_STT_ENABLED`
+- `GOOGLE_STT_API_KEY`
+- `GOOGLE_APPLICATION_CREDENTIALS`
+- `AZURE_STT_ENABLED`
+- `AZURE_SPEECH_KEY`
+- `AZURE_SPEECH_REGION`
+- `WHISPER_LOCAL_ENABLED`
 - `NEXT_PUBLIC_VAPI_PUBLIC_KEY`
 - `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL`
 - `ENABLE_DEV_VAPI_WEB_CALL`
@@ -32,8 +39,9 @@ Optional future variables:
 Server-only variables are validated in `src/lib/env.ts` and should not be imported into client components.
 Telegram variables are optional for general development checks. `TELEGRAM_BOT_TOKEN` is required only
 for Telegram-specific operations such as sending a lead card or answering a callback.
-`VAPI_WEBHOOK_SECRET` is required for production Vapi webhooks. Local development can parse and
-simulate Vapi fixture payloads without live Vapi credentials.
+`VAPI_WEBHOOK_SECRET` is required only when intentionally running the legacy Vapi
+benchmark/contingency webhook in production. Local development can parse and simulate Vapi fixture
+payloads without live Vapi credentials.
 `SELF_HOST_VOICE_WEBHOOK_SECRET` protects `/api/webhooks/self-host-voice` when configured. Local
 self-host dry-runs can run without it outside production.
 `STT_PROVIDER`, `STT_MODE`, and `DEEPGRAM_API_KEY` are used by the Python voice-agent for local STT
@@ -41,6 +49,10 @@ experiments. Deepgram live calls are optional and should be run only when intent
 paid STT modes. The current MVP default mode is `STT_MODE=deepgram-ru-nova2` for Russian-first
 behavior. Do not claim reliable Kazakh support yet; KZ-only and mixed RU/KZ STT remain
 callback-required fallback.
+`GOOGLE_STT_ENABLED=false` and `AZURE_STT_ENABLED=false` by default. Set them to `true` only when
+running Kazakh benchmark uploads with `GOOGLE_STT_API_KEY` or `GOOGLE_APPLICATION_CREDENTIALS`, or
+with `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION`. `WHISPER_LOCAL_ENABLED=false` documents the future
+local faster-whisper track; the dependency/model is not installed by default.
 `NEXT_PUBLIC_VAPI_PUBLIC_KEY` is safe for browser use and is required only for the dev Vapi Web Call
 page. `ENABLE_DEV_VAPI_WEB_CALL=true` enables that page in production when deliberately needed.
 `NEXT_PUBLIC_SELF_HOST_VOICE_AGENT_URL` is safe for browser use and defaults to
@@ -223,7 +235,10 @@ Public webhook callback verification:
 7. Run `npm run lead:status`.
 8. Confirm the demo lead status is `ACCEPTED`.
 
-## Vapi Local Testing
+## Optional Legacy Vapi Local Testing
+
+Vapi is not the planned production route. Use these commands only for intentional benchmark,
+comparison, or contingency diagnostics.
 
 Vapi Server URL for deployed or tunneled environments:
 
@@ -286,9 +301,9 @@ address heuristics, urgency/safety keyword rules, and raw payload persistence fo
 
 Detailed live setup steps and troubleshooting are in `docs/VAPI_LIVE_SETUP.md`.
 
-## Self-Host Voice Spike Local Testing
+## Self-Host Voice Local Testing
 
-The self-host voice spike keeps realtime voice work outside the Next.js app, under:
+The self-host voice path keeps realtime voice work outside the Next.js app, under:
 
 ```text
 services/voice-agent
@@ -434,9 +449,10 @@ STT_LANGUAGE_MODE=ru-kk
 
 Named STT modes are configured in `services/voice-agent/app/stt_modes.py`: `mock`,
 `deepgram-ru-nova2` (MVP default / recommended), `deepgram-ru-nova3` (experimental),
-`deepgram-multi-nova3` (experimental), and `deepgram-default` (not recommended / often empty).
-`STT_PROVIDER=deepgram` still works for the legacy env-driven path, while `STT_MODE` selects a named
-experiment mode.
+`deepgram-multi-nova3` (experimental), `deepgram-default` (not recommended / often empty),
+`google-kk`, `google-ru`, `google-ru-kk-auto`, `azure-kk`, `azure-ru`, `azure-ru-kk-auto`, and
+`whisper-local`. `STT_PROVIDER=deepgram` still works for the legacy env-driven path, while
+`STT_MODE` selects a named experiment mode.
 
 The experiment endpoint scores one audio sample against one scenario:
 
@@ -453,8 +469,8 @@ scenarios below 80 add `safety_low_confidence`.
 Exported STT results set the default to `deepgram-ru-nova2`: RU urgent plumbing scored 100/high,
 noisy fallback scored 100/high, electric danger scored 90/high, and gas emergency scored 74/medium.
 Gas is detected but remains `safety_low_confidence` unless score is at least 80. KZ/MIX samples are
-not production-ready. Next STT research TODO: compare Google Speech-to-Text, Azure Speech,
-Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable providers.
+not production-ready with Deepgram. Next manual benchmark: run the Shymkent KZ/MIX scenarios against
+Google, Azure, and eventually Whisper/faster-whisper before adding realtime LLM/TTS.
 
 Useful helpers:
 
@@ -472,7 +488,7 @@ For self-host verification, `npm run vapi:recent` is not relevant. Check:
 - Telegram card delivery
 - Supabase `calls.provider = self-host`
 
-## Vapi Web Call Dev Page
+## Optional Legacy Vapi Web Call Dev Page
 
 The browser Web SDK test page is available at:
 
@@ -521,7 +537,7 @@ summaries remain Russian.
 The checklist does not validate speech-to-text, audio behavior, phone/Web SDK behavior, or webhook
 delivery. It is a lightweight prompt-policy review before a real call.
 
-Optional Vapi Chat tests are available for later:
+Optional legacy Vapi Chat tests are available for comparison or contingency diagnostics:
 
 ```bash
 npm run vapi:chat-tests
@@ -548,12 +564,12 @@ Run:
 - `npm run test`
 - `npm run env:check`
 - `npm run telegram:ready`
-- `npm run vapi:ready`
-- `npm run vapi:live-ready`
 - `npm run dispatcher:policy-tests`
 - `npm run selfhost:simulate -- --dry-run`
-- `npm run vapi:live-checklist`
 - `npm run db:verify`
 - `npm run smoke:admin-data`
 - `npm run build`
 - Relevant tests when business logic changes
+
+Run `npm run vapi:ready`, `npm run vapi:live-ready`, and `npm run vapi:live-checklist` only when
+intentionally validating the legacy benchmark/contingency adapter.

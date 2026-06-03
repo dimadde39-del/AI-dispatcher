@@ -1,7 +1,7 @@
-# Self-Host Voice Agent Spike
+# Self-Host Voice Agent
 
-This service is the upload-based STT milestone for the self-host voice provider spike. It is not
-production-ready and does not replace Vapi yet.
+This service is the upload-based STT milestone for the selected self-host voice direction. It is not
+production-ready yet. Existing Vapi code is legacy benchmark or contingency tooling only.
 
 The current goal is to prove that a self-host voice runtime can emit normalized voice events into the
 existing Next.js backend:
@@ -26,8 +26,8 @@ Browser/WebRTC or test audio
 - No billing.
 - No duplicated lead or Telegram logic in Python.
 - Upload-based STT endpoints only; no realtime streaming agent yet.
-- Future Pipecat integration should live here after the mock/browser spike proves better RU/KZ
-  control than Vapi.
+- Future realtime orchestration should live here after the mock/browser path proves acceptable
+  Russian-first quality and safe KZ/mixed RU/KZ fallback handling.
 
 For now, the service can transcribe mock text or uploaded audio, then send normalized events to:
 
@@ -51,6 +51,13 @@ STT_MODE=deepgram-ru-nova2
 STT_LANGUAGE_MODE=ru-kk
 DEEPGRAM_MODEL=nova-3
 DEEPGRAM_API_KEY=
+GOOGLE_STT_ENABLED=false
+GOOGLE_STT_API_KEY=
+GOOGLE_APPLICATION_CREDENTIALS=
+AZURE_STT_ENABLED=false
+AZURE_SPEECH_KEY=
+AZURE_SPEECH_REGION=
+WHISPER_LOCAL_ENABLED=false
 OPENAI_API_KEY=
 DEEPSEEK_API_KEY=
 TTS_PROVIDER_API_KEY=
@@ -69,6 +76,14 @@ TTS_PROVIDER_API_KEY=
 - `DEEPGRAM_MODEL`: legacy Deepgram model used only when `STT_PROVIDER=deepgram` is used without a
   named `STT_MODE`.
 - `DEEPGRAM_API_KEY`: optional STT provider key.
+- `GOOGLE_STT_ENABLED`: opt-in switch for Google Speech-to-Text upload benchmarks. Default `false`.
+- `GOOGLE_STT_API_KEY` or `GOOGLE_APPLICATION_CREDENTIALS`: optional Google STT credentials for
+  `google-kk`, `google-ru`, and `google-ru-kk-auto`.
+- `AZURE_STT_ENABLED`: opt-in switch for Azure Speech upload benchmarks. Default `false`.
+- `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION`: optional Azure Speech credentials for `azure-kk` and
+  `azure-ru`.
+- `WHISPER_LOCAL_ENABLED`: documented future local Whisper switch. The faster-whisper dependency and
+  model are intentionally not installed yet.
 - `OPENAI_API_KEY` or `DEEPSEEK_API_KEY`: future LLM provider key.
 - `TTS_PROVIDER_API_KEY`: future TTS provider key.
 
@@ -123,10 +138,12 @@ Mock JSON:
 }
 ```
 
-Audio upload uses multipart form field `file`. Uploaded audio is sent to Deepgram's pre-recorded
-`/v1/listen` API for named Deepgram modes. With `STT_MODE=deepgram-ru-nova2`, the service sends
-`language=ru&model=nova-2`. Treat every Deepgram mode as a quality test, not a guarantee. Do not
-claim reliable Kazakh support yet.
+Audio upload uses multipart form field `file`. Uploaded audio is sent to the selected provider:
+Deepgram `/v1/listen`, Google `speech:recognize`, or Azure Speech short-audio REST. With
+`STT_MODE=deepgram-ru-nova2`, the service sends `language=ru&model=nova-2`. Google and Azure modes
+use official `kk-KZ` and `ru-RU` language codes where configured. Azure REST upload expects WAV PCM
+or OGG OPUS, not browser `.webm`. Treat every external mode as a quality test, not a guarantee. Do
+not claim reliable Kazakh support yet.
 
 `POST /stt/experiment` accepts `scenarioId`, optional `mode`, and an uploaded audio `file`. For local
 scorer checks it also accepts JSON with `mode=mock` and `text`. Empty transcripts return HTTP 200
@@ -136,8 +153,8 @@ expected keywords marked missed.
 Exported STT results set the MVP default to `deepgram-ru-nova2`: RU urgent plumbing scored 100/high,
 noisy fallback scored 100/high, electric danger scored 90/high, and gas emergency scored 74/medium.
 Gas is detected but remains `safety_low_confidence` unless score is at least 80. KZ/MIX is
-callback-required fallback, not production-ready. Research next: Google Speech-to-Text, Azure
-Speech, Whisper/faster-whisper, Yandex/SpeechKit if viable, and other Kazakh-capable STT.
+callback-required fallback, not production-ready. Current rescue-track candidates are Google
+Speech-to-Text, Azure Speech, and later Whisper/faster-whisper.
 
 Do not put lead creation, Telegram formatting, Supabase writes, or billing behavior in this service.
 It should only handle voice/STT orchestration and emit normalized events.

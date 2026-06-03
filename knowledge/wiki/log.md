@@ -1,5 +1,27 @@
 # Wiki Operation Log
 
+## 2026-06-03
+
+- Added optional Kazakh rescue STT benchmark modes without replacing the Russian-first Deepgram
+  default: Google Speech-to-Text (`google-kk`, `google-ru`, `google-ru-kk-auto`), Azure Speech
+  (`azure-kk`, `azure-ru`), plus disabled research skeletons (`azure-ru-kk-auto`, `whisper-local`).
+- Extended the self-host STT benchmark with Shymkent-realistic KZ/MIX scenarios, provider
+  availability metadata, disabled-mode UI explanations, KZ/MIX alias scoring, latinized Kazakh
+  warnings, and callback handling for mostly non-Cyrillic KZ transcripts.
+- Current MVP remains Russian-first on `deepgram-ru-nova2`; current Deepgram evidence still fails
+  KZ-only and mixed RU/KZ, so Google/Azure/Whisper are benchmark candidates only, not production
+  Kazakh support.
+
+## 2026-05-31
+
+- Added `knowledge/PRODUCT_STRATEGY.md` and ADR 0007. AI Dispatcher is the current market-entry
+  wedge; Tamyz is a later strategic expansion after Dispatcher revenue, relationships, supply-side
+  trust, and field evidence.
+- Selected self-host as the planned production voice direction. Existing Vapi code remains only as
+  legacy benchmark or contingency tooling and must not drive roadmap or pilot economics.
+- Updated operational docs, agent rules, wiki synthesis, local-development instructions, and
+  DeerFlow council prompts to remove superseded Vapi-first and pre-foundation assumptions.
+
 ## 2026-05-30
 
 - Recorded exported STT benchmark conclusions: `deepgram-ru-nova2` is the Russian-first MVP default

@@ -1,7 +1,10 @@
 # Self-Host STT Experiments
 
 This is a manual quality experiment for Kazakhstan RU/KZ/MIX caller audio. It is not production,
-does not add LLM, does not add TTS, and does not replace Vapi.
+does not add LLM, does not add TTS, and does not yet provide self-host production telephony.
+
+Self-host is the selected production direction. Vapi may be used only as an optional legacy
+benchmark or contingency path.
 
 Decision gate: choose the STT mode before starting any realtime self-host response LLM/TTS loop.
 
@@ -16,10 +19,33 @@ Configured in `services/voice-agent/app/stt_modes.py`:
 | `deepgram-ru-nova3` | Deepgram | `nova-3` | `ru` | Experimental Russian-only baseline. |
 | `deepgram-multi-nova3` | Deepgram | `nova-3` | `multi` | Experimental RU/KZ code-switching research mode; not production-ready. |
 | `deepgram-default` | Deepgram | not sent | not sent | Not recommended; exported runs often return empty transcripts. |
+| `google-kk` | Google Speech-to-Text | `speech-to-text-v1p1beta1` | `kk-KZ` | Experimental Kazakh rescue benchmark. Disabled unless `GOOGLE_STT_ENABLED=true` and Google credentials are configured. |
+| `google-ru` | Google Speech-to-Text | `speech-to-text-v1p1beta1` | `ru-RU` | Experimental Russian comparison. Disabled unless Google STT is enabled and configured. |
+| `google-ru-kk-auto` | Google Speech-to-Text | `speech-to-text-v1p1beta1` | `ru-RU` + `kk-KZ` alternative | Experimental RU/KZ language-recognition comparison using `alternativeLanguageCodes`. |
+| `azure-kk` | Azure Speech | short-audio REST | `kk-KZ` | Experimental Kazakh rescue benchmark. Disabled unless `AZURE_STT_ENABLED=true`, key, and region are configured. |
+| `azure-ru` | Azure Speech | short-audio REST | `ru-RU` | Experimental Russian comparison. Azure REST upload supports WAV PCM / OGG OPUS short audio, not browser `.webm`. |
+| `azure-ru-kk-auto` | Azure Speech | SDK language identification | `ru-RU` + `kk-KZ` candidates | Skeleton only. Azure language identification is SDK-oriented and is not implemented in the lightweight REST upload path yet. |
+| `whisper-local` | Whisper / faster-whisper | local model | `kk`/`ru` research | Documented placeholder. Dependency/model install is intentionally not added yet. |
 
 Current decision: the MVP voice language is Russian-first, with `deepgram-ru-nova2` as the default
 STT mode. Do not claim reliable Kazakh support yet. KZ-only and mixed RU/KZ calls are
-callback-required fallback until a better provider or configuration is proven.
+callback-required fallback until a better provider or configuration is proven. Google, Azure, and
+Whisper modes are a dedicated Kazakh benchmark track, not a replacement for the current Deepgram
+default.
+
+Provider notes checked against official docs: Google Speech-to-Text V1 lists `kk-KZ` and `ru-RU` as
+supported language codes and documents `alternativeLanguageCodes` for multi-language recognition.
+Azure Speech lists `kk-KZ` and `ru-RU`; its short-audio REST API requires a `language` query
+parameter and supports short WAV/OGG uploads, while language identification is documented through
+Speech SDK flows rather than this lightweight REST path.
+
+Official references:
+
+- Google Speech-to-Text language support: https://cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages
+- Google RecognitionConfig: https://cloud.google.com/speech-to-text/docs/reference/rest/v1p1beta1/RecognitionConfig
+- Azure Speech language support: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support
+- Azure short-audio REST STT: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/rest-speech-to-text-short
+- Azure language identification: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-identification
 
 ## Exported Result Summary, May 2026
 
@@ -54,6 +80,31 @@ For paid Deepgram runs, set:
 DEEPGRAM_API_KEY=...
 STT_MODE=deepgram-ru-nova2
 ```
+
+For optional Google uploads:
+
+```bash
+GOOGLE_STT_ENABLED=true
+GOOGLE_STT_API_KEY=...
+# or GOOGLE_APPLICATION_CREDENTIALS=C:\path\service-account.json with google-auth installed
+```
+
+For optional Azure uploads:
+
+```bash
+AZURE_STT_ENABLED=true
+AZURE_SPEECH_KEY=...
+AZURE_SPEECH_REGION=eastus
+```
+
+Whisper local is documented only:
+
+```bash
+WHISPER_LOCAL_ENABLED=false
+```
+
+Do not add Google, Azure, or Whisper credentials to committed files. Leave all optional providers
+disabled unless intentionally running a benchmark.
 
 Start both services:
 
@@ -90,6 +141,11 @@ Record one short clip for each scenario in `services/voice-agent/app/stt_scenari
 - RU urgent plumbing
 - KZ water leak
 - MIX RU/KZ water leak
+- KZ fast plumbing
+- KZ slang/noisy
+- MIX fast plumbing
+- MIX spouse background
+- GAS KZ/RU
 - GAS emergency
 - ELECTRIC danger
 - Noisy/unclear fallback phrase
@@ -102,7 +158,8 @@ For each clip:
 4. Click `Stop and Score`, or upload a pre-recorded `.webm`, `.wav`, or `.mp3` file.
 5. Save or copy/export the returned transcript, score, confidence, usability, missed keywords,
    warnings, and mode.
-6. Repeat the same audio phrase for every Deepgram mode being compared.
+6. Repeat the same audio phrase for every enabled benchmark mode. Disabled Google/Azure/Whisper modes
+   stay visible in the UI with their missing env reason.
 
 If the page says MediaRecorder is unavailable, the browser/context cannot record audio. Use Chrome or
 Edge on `localhost`, or use file upload/mock transcript instead. If the voice-agent status is
@@ -141,6 +198,12 @@ Scripted file upload example:
 npm run selfhost:stt-file -- --file=C:\path\sample.webm --scenario=ru-urgent-plumbing --mode=deepgram-ru-nova2
 ```
 
+Azure REST upload example with WAV:
+
+```powershell
+npm run selfhost:stt-file -- --file=C:\path\sample.wav --scenario=kz-fast-plumbing --mode=azure-kk
+```
+
 Mock scoring example:
 
 ```powershell
@@ -157,6 +220,7 @@ Compare by scenario and mode:
 - Keyword hits and missed keywords.
 - Wrong-language warnings.
 - Whether Kazakh characters survive in KZ/MIX phrases.
+- Whether KZ/MIX transcripts are romanized or mostly non-Cyrillic.
 - Whether emergency trigger words survive for gas/electric danger.
 - Confidence and callback policy: score `< 60` adds `low_confidence`, score `< 40` is unusable,
   empty transcript is unusable, and gas/safety scenarios below `80` add `safety_low_confidence`.
@@ -169,6 +233,8 @@ Pass for a mode:
 - No emergency scenario loses the danger keyword (`газ`, `пахнет`, `проводка`, `искрит`, or similar).
 - No RU/KZ scenario returns obvious Spanish/English junk.
 - KZ and MIX scenarios preserve enough Kazakh signal to understand the lead.
+- Romanized KZ/MIX transcripts are explicitly reviewed and do not become confident production
+  evidence without manual acceptance.
 
 Fail for a mode:
 
@@ -176,6 +242,7 @@ Fail for a mode:
 - KZ/MIX phrases are consistently routed as another language.
 - Missed keywords prevent the master from understanding problem, district, urgency, or name.
 - Any safety scenario requires confident automation while scoring below 80.
+- A KZ/MIX mode only works after transliteration or manual guesswork.
 
 ## Low-Confidence Handling
 
@@ -193,6 +260,8 @@ The required fallback thresholds remain:
 - Score `< 60` is callback-required.
 - Gas or other safety score `< 80` is `safety_low_confidence` and callback-required even when the
   danger keyword is detected.
+- KZ/MIX transcripts that are mostly non-Cyrillic are callback-required even if aliases produce a
+  readable research score.
 
 ## Noisy Transcript Cleanup
 
@@ -211,11 +280,13 @@ caller phone should become `NO_LEAD`.
 
 ## Next Research TODO
 
-Benchmark alternative RU/KZ-capable STT before production self-host automation:
+Run the dedicated Kazakh rescue benchmark before production self-host automation:
 
-- Google Speech-to-Text.
-- Azure Speech.
-- Whisper or faster-whisper.
+- Google Speech-to-Text: `google-kk`, `google-ru`, `google-ru-kk-auto`.
+- Azure Speech: `azure-kk`, `azure-ru`; keep `azure-ru-kk-auto` as a skeleton until SDK/batch
+  language identification is wired.
+- Whisper or faster-whisper: keep `whisper-local` documented until a local model/dependency plan is
+  accepted.
 - Yandex/SpeechKit if viable.
 - Other Kazakh-capable STT providers.
 
@@ -224,5 +295,5 @@ Benchmark alternative RU/KZ-capable STT before production self-host automation:
 After local mock emit and file/recording STT pass, pick one STT mode, document why, and only then
 start the realtime self-host response LLM/TTS loop. Real phone number testing comes after the local
 STT plus extraction pipeline works.
-Vapi remains the fallback until the self-host path beats it on RU/KZ call quality and operational
-reliability.
+Vapi does not define this gate. Use it only as an optional comparison or emergency contingency while
+the self-host path proves operational quality and reliability.

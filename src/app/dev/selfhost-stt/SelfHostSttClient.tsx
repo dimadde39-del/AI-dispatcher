@@ -36,6 +36,16 @@ interface SttMode {
   language: string | null;
   options: Record<string, unknown>;
   description: string;
+  enabled?: boolean;
+  experimental?: boolean;
+  implemented?: boolean;
+  default?: boolean;
+  missing_env?: string[];
+  missingEnv?: string[];
+  required_env?: string[];
+  requiredEnv?: string[];
+  unavailable_reason?: string | null;
+  unavailableReason?: string | null;
 }
 
 interface SttScenario {
@@ -87,6 +97,10 @@ interface ExperimentResponse {
   missedKeywords?: string[];
   has_russian?: boolean;
   has_kazakh_chars?: boolean;
+  has_latinized_kazakh?: boolean;
+  hasLatinizedKazakh?: boolean;
+  cyrillic_ratio?: number;
+  cyrillicRatio?: number;
   likely_wrong_language?: boolean;
   warnings?: string[];
   confidence?: ExperimentConfidence;
@@ -103,7 +117,24 @@ const MODE_STATUS_LABELS: Record<string, string> = {
   "deepgram-ru-nova3": "experimental",
   "deepgram-multi-nova3": "experimental",
   "deepgram-default": "not recommended / often empty",
+  "google-kk": "experimental Kazakh benchmark",
+  "google-ru": "experimental",
+  "google-ru-kk-auto": "experimental Kazakh benchmark",
+  "azure-kk": "experimental Kazakh benchmark",
+  "azure-ru": "experimental",
+  "azure-ru-kk-auto": "skeleton / disabled",
+  "whisper-local": "skeleton / disabled",
 };
+const PROVIDER_LABELS: Record<string, string> = {
+  mock: "Mock",
+  deepgram: "Deepgram",
+  google: "Google Speech-to-Text",
+  azure: "Azure Speech",
+  whisper: "Whisper / faster-whisper",
+};
+const PROVIDER_ORDER = ["mock", "deepgram", "google", "azure", "whisper"];
+const GOOGLE_REQUIRED_ENV = ["GOOGLE_STT_ENABLED", "GOOGLE_STT_API_KEY or GOOGLE_APPLICATION_CREDENTIALS"];
+const AZURE_REQUIRED_ENV = ["AZURE_STT_ENABLED", "AZURE_SPEECH_KEY", "AZURE_SPEECH_REGION"];
 
 const FALLBACK_MODES: SttMode[] = [
   {
@@ -121,6 +152,8 @@ const FALLBACK_MODES: SttMode[] = [
     language: "ru",
     options: { punctuate: true, smart_format: true },
     description: "MVP default / recommended: Russian-first Deepgram nova-2.",
+    default: true,
+    requiredEnv: ["DEEPGRAM_API_KEY"],
   },
   {
     id: "deepgram-ru-nova3",
@@ -129,6 +162,8 @@ const FALLBACK_MODES: SttMode[] = [
     language: "ru",
     options: { punctuate: true, smart_format: true },
     description: "Experimental Russian-only Deepgram nova-3 baseline.",
+    experimental: true,
+    requiredEnv: ["DEEPGRAM_API_KEY"],
   },
   {
     id: "deepgram-multi-nova3",
@@ -137,6 +172,8 @@ const FALLBACK_MODES: SttMode[] = [
     language: "multi",
     options: { punctuate: true, smart_format: true },
     description: "Experimental RU/KZ research mode; current KZ/MIX results are unusable.",
+    experimental: true,
+    requiredEnv: ["DEEPGRAM_API_KEY"],
   },
   {
     id: "deepgram-default",
@@ -145,6 +182,101 @@ const FALLBACK_MODES: SttMode[] = [
     language: null,
     options: { punctuate: true, smart_format: true },
     description: "Not recommended: Deepgram API defaults often return empty transcripts.",
+    experimental: true,
+    requiredEnv: ["DEEPGRAM_API_KEY"],
+  },
+  {
+    id: "google-kk",
+    provider: "google",
+    model: "speech-to-text-v1p1beta1",
+    language: "kk-KZ",
+    options: { enableAutomaticPunctuation: true },
+    description: "Experimental Kazakh benchmark mode using Google Speech-to-Text.",
+    experimental: true,
+    enabled: false,
+    requiredEnv: GOOGLE_REQUIRED_ENV,
+    missingEnv: GOOGLE_REQUIRED_ENV,
+    unavailableReason: "Google STT benchmark modes require opt-in credentials.",
+  },
+  {
+    id: "google-ru",
+    provider: "google",
+    model: "speech-to-text-v1p1beta1",
+    language: "ru-RU",
+    options: { enableAutomaticPunctuation: true },
+    description: "Experimental Russian benchmark mode using Google Speech-to-Text.",
+    experimental: true,
+    enabled: false,
+    requiredEnv: GOOGLE_REQUIRED_ENV,
+    missingEnv: GOOGLE_REQUIRED_ENV,
+    unavailableReason: "Google STT benchmark modes require opt-in credentials.",
+  },
+  {
+    id: "google-ru-kk-auto",
+    provider: "google",
+    model: "speech-to-text-v1p1beta1",
+    language: "ru-RU+kk-KZ",
+    options: { enableAutomaticPunctuation: true, alternativeLanguageCodes: ["kk-KZ"] },
+    description: "Experimental Google RU/KZ language-recognition mode.",
+    experimental: true,
+    enabled: false,
+    requiredEnv: GOOGLE_REQUIRED_ENV,
+    missingEnv: GOOGLE_REQUIRED_ENV,
+    unavailableReason: "Google STT benchmark modes require opt-in credentials.",
+  },
+  {
+    id: "azure-kk",
+    provider: "azure",
+    model: "speech-to-text-short-audio-rest",
+    language: "kk-KZ",
+    options: { format: "detailed" },
+    description: "Experimental Kazakh benchmark mode using Azure Speech short-audio REST.",
+    experimental: true,
+    enabled: false,
+    requiredEnv: AZURE_REQUIRED_ENV,
+    missingEnv: AZURE_REQUIRED_ENV,
+    unavailableReason: "Azure STT benchmark modes require opt-in credentials.",
+  },
+  {
+    id: "azure-ru",
+    provider: "azure",
+    model: "speech-to-text-short-audio-rest",
+    language: "ru-RU",
+    options: { format: "detailed" },
+    description: "Experimental Russian benchmark mode using Azure Speech short-audio REST.",
+    experimental: true,
+    enabled: false,
+    requiredEnv: AZURE_REQUIRED_ENV,
+    missingEnv: AZURE_REQUIRED_ENV,
+    unavailableReason: "Azure STT benchmark modes require opt-in credentials.",
+  },
+  {
+    id: "azure-ru-kk-auto",
+    provider: "azure",
+    model: "speech-sdk-language-identification",
+    language: "ru-RU+kk-KZ",
+    options: { languageIdentification: "at-start", candidateLanguages: ["ru-RU", "kk-KZ"] },
+    description: "Documented placeholder for Azure RU/KZ language identification.",
+    experimental: true,
+    implemented: false,
+    enabled: false,
+    requiredEnv: AZURE_REQUIRED_ENV,
+    missingEnv: AZURE_REQUIRED_ENV,
+    unavailableReason: "Azure RU/KZ auto mode needs a heavier SDK or batch language identification path.",
+  },
+  {
+    id: "whisper-local",
+    provider: "whisper",
+    model: "faster-whisper",
+    language: "kk|ru",
+    options: { local: true },
+    description: "Documented local Whisper/faster-whisper research mode.",
+    experimental: true,
+    implemented: false,
+    enabled: false,
+    requiredEnv: ["WHISPER_LOCAL_ENABLED", "faster-whisper model installed"],
+    missingEnv: ["WHISPER_LOCAL_ENABLED", "faster-whisper model installed"],
+    unavailableReason: "Whisper local dependency/model install is intentionally not added yet.",
   },
 ];
 
@@ -160,17 +292,52 @@ const FALLBACK_SCENARIOS: SttScenario[] = [
   {
     id: "kz-water-leak",
     label: "KZ water leak",
-    expected_keywords: ["су", "ағып", "жатыр", "Шымкент", "Тұран", "тезірек", "Дима"],
+    expected_keywords: ["су", "ағып жатыр", "Шымкент", "Тұран", "тезірек", "Дима"],
     expected_language: "kk",
     original_text: "Су ағып жатыр. Шымкент, Тұран жақта. Тезірек керек. Атым Дима.",
   },
   {
     id: "mix-ru-kz-water-leak",
     label: "MIX RU/KZ water leak",
-    expected_keywords: ["су", "ағып", "течь", "Шымкент", "Тұран", "этаж", "тезірек", "Дима"],
+    expected_keywords: ["су", "ағып жатыр", "течь", "Шымкент", "Тұран", "этаж", "тезірек", "Дима"],
     expected_language: "mixed",
     original_text:
       "Аға, су ағып жатыр, ваннаның астынан течь. Шымкент, Тұран жақта, 5 этаж. Тезірек керек. Атым Дима.",
+  },
+  {
+    id: "kz-fast-plumbing",
+    label: "KZ fast plumbing",
+    expected_keywords: ["су", "ағып жатыр", "кран", "тезірек", "Шымкент", "Нұрсат", "он бесінші"],
+    expected_language: "kk",
+    original_text: "Аға су ағып жатыр краннан тезірек келіңіз Шымкент Нұрсат он бесінші үй",
+  },
+  {
+    id: "kz-slang-noisy",
+    label: "KZ slang/noisy",
+    expected_keywords: ["аға", "су", "кетіп жатыр", "кран", "бала", "тез"],
+    expected_language: "kk",
+    original_text: "алло аға шшс су кетіп жатыр краннан бала жылап жатыр тез келіңіз",
+  },
+  {
+    id: "mix-fast-plumbing",
+    label: "MIX fast plumbing",
+    expected_keywords: ["су", "ағып жатыр", "труба", "течет", "Шымкент", "Нұрсат", "тезірек"],
+    expected_language: "mixed",
+    original_text: "аға су ағып жатыр труба течет Шымкент Нурсат тезірек керек",
+  },
+  {
+    id: "mix-spouse-background",
+    label: "MIX spouse background",
+    expected_keywords: ["сантехник", "муж", "кран", "течет", "тезірек", "Нұрсат", "он бес"],
+    expected_language: "mixed",
+    original_text: "әй алло сантехник па муж говорит кран течет тезірек келсін адрес Нурсат дом он бес",
+  },
+  {
+    id: "gas-kz-ru",
+    label: "GAS KZ/RU",
+    expected_keywords: ["газ", "иісі", "пахнет", "Шымкент", "Нұрсат"],
+    expected_language: "mixed",
+    original_text: "үйде газ иісі бар пахнет газом Шымкент Нурсат не знаю что делать",
   },
   {
     id: "gas-emergency",
@@ -197,6 +364,7 @@ const FALLBACK_SCENARIOS: SttScenario[] = [
 
 const KAZAKH_CHAR_PATTERN = /[әғқңөұүһіӘҒҚҢӨҰҮҺІ]/u;
 const RUSSIAN_CHAR_PATTERN = /[а-яёА-ЯЁ]/u;
+const CYRILLIC_CHAR_PATTERN = /[а-яёәғқңөұүһіА-ЯЁӘҒҚҢӨҰҮҺІ]/u;
 const WRONG_LANGUAGE_MARKERS = [
   "hola",
   "buenos",
@@ -212,6 +380,44 @@ const WRONG_LANGUAGE_MARKERS = [
   "my name is",
   "bathroom",
 ];
+const LATINIZED_KAZAKH_MARKERS = [
+  "aga",
+  "agha",
+  "agyp",
+  "agip",
+  "jatyr",
+  "zhatyr",
+  "ketip",
+  "tezirek",
+  "keliniz",
+  "shymkent",
+  "shimkent",
+  "nursat",
+  "turan",
+  "su",
+];
+const KEYWORD_ALIASES: Record<string, string[]> = {
+  "шымкент": ["шемкент", "шимкент", "shymkent", "shimkent"],
+  "нурсат": ["нұрсат", "nursat", "норсад", "наш сад"],
+  "нұрсат": ["нурсат", "nursat", "норсад", "наш сад"],
+  "тұран": ["туран", "turan"],
+  "туран": ["тұран", "turan"],
+  "су": ["вода", "воды", "водичка", "суы", "su"],
+  "ағып жатыр": ["агып жатыр", "кетіп жатыр", "кетип жатыр", "ағып тұр", "агып тур", "течет", "течь"],
+  "ағып": ["агып", "кетіп", "кетип", "течет", "течь"],
+  "жатыр": ["тұр", "тур", "идет"],
+  "кетіп жатыр": ["ағып жатыр", "агып жатыр", "кетип жатыр", "ағып тұр", "течет", "течь"],
+  "кран": ["крана", "краннан", "құбыр", "кубыр", "труба", "смеситель", "kran"],
+  "құбыр": ["кубыр", "кран", "труба"],
+  "труба": ["трубы", "кран", "құбыр", "кубыр"],
+  "течет": ["течёт", "течь", "ағып жатыр", "агып жатыр"],
+  "течь": ["течет", "течёт", "ағып жатыр", "агып жатыр"],
+  "тезірек": ["тезирек", "тез", "срочно", "быстро", "tezirek", "tez"],
+  "он бес": ["15", "пятнадцать"],
+  "он бесінші": ["15", "пятнадцатый", "он бес"],
+  "иісі": ["исі", "иісі бар", "запах", "пахнет"],
+  "газ": ["газом", "газа"],
+};
 
 function cleanDetail(value: unknown): string {
   if (value instanceof Error) {
@@ -234,7 +440,54 @@ function normalizeText(value: string): string {
 }
 
 function normalizedForKeyword(value: string): string {
-  return normalizeText(value).replaceAll("ё", "е").split(/\s+/u).filter(Boolean).join(" ");
+  return normalizeText(value)
+    .replaceAll("ё", "е")
+    .replace(/[^\p{L}\p{N}_\s]+/gu, " ")
+    .split(/\s+/u)
+    .filter(Boolean)
+    .join(" ");
+}
+
+function containsAlias(normalizedTranscript: string, alias: string): boolean {
+  if (!alias) {
+    return false;
+  }
+
+  if (alias.includes(" ")) {
+    return normalizedTranscript.includes(alias);
+  }
+
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegExp(alias)}(?![\\p{L}\\p{N}_])`, "u").test(
+    normalizedTranscript,
+  );
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function keywordAliases(keyword: string): string[] {
+  const normalizedKeyword = normalizedForKeyword(keyword);
+  const aliases = KEYWORD_ALIASES[normalizedKeyword] ?? [];
+  return [normalizedKeyword, ...aliases.map((alias) => normalizedForKeyword(alias))];
+}
+
+function keywordMatches(normalizedTranscript: string, keyword: string): boolean {
+  return keywordAliases(keyword).some((alias) => containsAlias(normalizedTranscript, alias));
+}
+
+function looksLatinizedKazakh(normalizedTranscript: string): boolean {
+  return LATINIZED_KAZAKH_MARKERS.some((marker) => containsAlias(normalizedTranscript, marker));
+}
+
+function cyrillicRatio(value: string): number {
+  const letters = [...value].filter((char) => /\p{L}/u.test(char));
+  if (letters.length === 0) {
+    return 0;
+  }
+
+  const cyrillicCount = letters.filter((char) => CYRILLIC_CHAR_PATTERN.test(char)).length;
+  return Math.round((cyrillicCount / letters.length) * 100) / 100;
 }
 
 function classifyExperimentScore(
@@ -257,10 +510,11 @@ function classifyExperimentScore(
     nextWarnings.push("low_confidence");
   }
 
-  const safetyLowConfidence = ["gas-emergency", "electric-danger"].includes(scenario.id) && score < 80;
+  const safetyLowConfidence = ["gas-emergency", "gas-kz-ru", "electric-danger"].includes(scenario.id) && score < 80;
   if (safetyLowConfidence && !nextWarnings.includes("safety_low_confidence")) {
     nextWarnings.push("safety_low_confidence");
   }
+  const scriptLowConfidence = nextWarnings.includes("mostly_non_cyrillic_kz");
 
   const confidence: ExperimentConfidence =
     score < 40 ? "unusable" : score < 60 ? "low" : score < 80 ? "medium" : "high";
@@ -269,7 +523,7 @@ function classifyExperimentScore(
   return {
     confidence,
     usable,
-    requiresCallback: !usable || score < 60 || safetyLowConfidence,
+    requiresCallback: !usable || score < 60 || safetyLowConfidence || scriptLowConfidence,
     warnings: nextWarnings,
   };
 }
@@ -301,7 +555,7 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
   const missedKeywords: string[] = [];
 
   for (const keyword of scenario.expected_keywords) {
-    if (normalizedTranscript.includes(normalizedForKeyword(keyword))) {
+    if (keywordMatches(normalizedTranscript, keyword)) {
       keywordHits.push(keyword);
     } else {
       missedKeywords.push(keyword);
@@ -310,6 +564,9 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
 
   const hasRussian = RUSSIAN_CHAR_PATTERN.test(transcript);
   const hasKazakhChars = KAZAKH_CHAR_PATTERN.test(transcript);
+  const ratio = cyrillicRatio(transcript);
+  const hasLatinizedKazakh = looksLatinizedKazakh(normalizedTranscript);
+  const mostlyNonCyrillicKz = ["kk", "mixed"].includes(scenario.expected_language) && ratio < 0.5;
   const likelyWrongLanguage = WRONG_LANGUAGE_MARKERS.some((marker) => normalizedTranscript.includes(marker));
   const keywordScore =
     scenario.expected_keywords.length > 0
@@ -319,7 +576,9 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
     scenario.expected_language === "kk"
       ? hasKazakhChars
         ? 20
-        : 0
+        : hasRussian
+          ? 10
+          : 0
       : scenario.expected_language === "mixed"
         ? (hasRussian ? 10 : 0) + (hasKazakhChars ? 10 : 0)
         : hasRussian
@@ -334,6 +593,13 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
   if (likelyWrongLanguage) {
     warnings.push("likely_wrong_language");
     score = Math.max(0, score - 40);
+  }
+  if (["kk", "mixed"].includes(scenario.expected_language) && hasLatinizedKazakh) {
+    warnings.push("latinized_kazakh_detected");
+  }
+  if (mostlyNonCyrillicKz) {
+    warnings.push("mostly_non_cyrillic_kz");
+    score = Math.max(0, score - 15);
   }
   if (!hasRussian && !hasKazakhChars) {
     warnings.push("no_cyrillic_detected");
@@ -359,6 +625,10 @@ function scoreTranscriptLocally(transcript: string, scenario: SttScenario): Expe
     missedKeywords,
     has_russian: hasRussian,
     has_kazakh_chars: hasKazakhChars,
+    has_latinized_kazakh: hasLatinizedKazakh,
+    hasLatinizedKazakh,
+    cyrillic_ratio: ratio,
+    cyrillicRatio: ratio,
     likely_wrong_language: likelyWrongLanguage,
     ...classification,
   };
@@ -391,8 +661,52 @@ function isMediaRecorderAvailable(): boolean {
 
 function sttModeOptionLabel(mode: SttMode): string {
   const statusLabel = MODE_STATUS_LABELS[mode.id];
+  const disabledLabel = mode.enabled === false ? "disabled" : null;
+  const labels = [statusLabel, disabledLabel].filter(Boolean).join(", ");
 
-  return statusLabel ? `${mode.id} (${statusLabel})` : mode.id;
+  return labels ? `${mode.id} (${labels})` : mode.id;
+}
+
+function modeMissingEnv(mode: SttMode): string[] {
+  return mode.missingEnv ?? mode.missing_env ?? [];
+}
+
+function modeRequiredEnv(mode: SttMode): string[] {
+  return mode.requiredEnv ?? mode.required_env ?? [];
+}
+
+function modeUnavailableReason(mode: SttMode): string | null {
+  return mode.unavailableReason ?? mode.unavailable_reason ?? null;
+}
+
+function modeAvailabilitySummary(mode: SttMode): string | null {
+  if (mode.enabled !== false) {
+    return null;
+  }
+
+  const missingEnv = modeMissingEnv(mode);
+  const reason = modeUnavailableReason(mode);
+  if (missingEnv.length > 0 && reason) {
+    return `${reason} Missing: ${missingEnv.join(", ")}.`;
+  }
+  if (missingEnv.length > 0) {
+    return `Missing: ${missingEnv.join(", ")}.`;
+  }
+
+  return reason ?? "Mode is disabled.";
+}
+
+function groupModesByProvider(modes: SttMode[]): Array<{ provider: string; modes: SttMode[] }> {
+  const providers = new Set(modes.map((mode) => mode.provider));
+  const orderedProviders = [
+    ...PROVIDER_ORDER.filter((provider) => providers.has(provider)),
+    ...[...providers].filter((provider) => !PROVIDER_ORDER.includes(provider)).sort(),
+  ];
+
+  return orderedProviders.map((provider) => ({
+    provider,
+    modes: modes.filter((mode) => mode.provider === provider),
+  }));
 }
 
 export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientProps) {
@@ -431,6 +745,8 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     () => modes.find((mode) => mode.id === selectedMode) ?? modes[0] ?? FALLBACK_MODES[0],
     [modes, selectedMode],
   );
+  const groupedModes = useMemo(() => groupModesByProvider(modes), [modes]);
+  const disabledModes = useMemo(() => modes.filter((mode) => mode.enabled === false), [modes]);
 
   const recommendations = useMemo(() => recommendBestModes(resultHistory), [resultHistory]);
   const voiceAgentOnline = serviceStatus.state === "online";
@@ -808,10 +1124,18 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
     setMockText(scenario.original_text);
   }
 
+  const selectedModeDisabled = selectedModeConfig.enabled === false;
+  const selectedModeAvailability = modeAvailabilitySummary(selectedModeConfig);
   const startDisabled =
-    !enabled || !voiceAgentOnline || mediaRecorderAvailable !== true || status === "recording" || status === "uploading";
+    !enabled ||
+    !voiceAgentOnline ||
+    selectedModeDisabled ||
+    mediaRecorderAvailable !== true ||
+    status === "recording" ||
+    status === "uploading";
   const stopDisabled = !enabled || status !== "recording";
-  const fileUploadDisabled = !enabled || !voiceAgentOnline || status === "uploading" || !selectedAudioFile;
+  const fileUploadDisabled =
+    !enabled || !voiceAgentOnline || selectedModeDisabled || status === "uploading" || !selectedAudioFile;
   const localMockDisabled = !enabled || status === "uploading" || !mockText.trim();
   const mockEmitDisabled = !enabled || !voiceAgentOnline || status === "uploading" || !mockText.trim();
   const experimentScore = experimentResult?.score;
@@ -911,10 +1235,14 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
             <div className="form-row">
               <label htmlFor="stt-mode">STT mode</label>
               <select id="stt-mode" value={selectedMode} onChange={(event) => setSelectedMode(event.target.value)}>
-                {modes.map((mode) => (
-                  <option key={mode.id} value={mode.id}>
-                    {sttModeOptionLabel(mode)}
-                  </option>
+                {groupedModes.map((group) => (
+                  <optgroup key={group.provider} label={PROVIDER_LABELS[group.provider] ?? group.provider}>
+                    {group.modes.map((mode) => (
+                      <option key={mode.id} value={mode.id} disabled={mode.enabled === false}>
+                        {sttModeOptionLabel(mode)}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -924,10 +1252,23 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
             {selectedModeConfig.model ? ` / ${selectedModeConfig.model}` : ""}
             {selectedModeConfig.language ? ` / ${selectedModeConfig.language}` : ""}
             {selectedModeStatus ? ` - ${selectedModeStatus}` : ""}
+            {selectedModeConfig.experimental ? " - experimental Kazakh benchmark track" : ""}
             {selectedModeConfig.description ? (
               <>
                 <br />
                 {selectedModeConfig.description}
+              </>
+            ) : null}
+            {selectedModeAvailability ? (
+              <>
+                <br />
+                {selectedModeAvailability}
+              </>
+            ) : null}
+            {modeRequiredEnv(selectedModeConfig).length > 0 ? (
+              <>
+                <br />
+                Env: {modeRequiredEnv(selectedModeConfig).join(", ")}
               </>
             ) : null}
           </p>
@@ -947,16 +1288,28 @@ export function SelfHostSttClient({ enabled, voiceAgentUrl }: SelfHostSttClientP
               Voice-agent is offline. Recording and file STT are disabled until it is reachable.
             </p>
           ) : null}
+          {voiceAgentOnline && selectedModeDisabled ? (
+            <p className="muted" style={{ marginTop: 12 }}>
+              Selected mode is disabled. {selectedModeAvailability}
+            </p>
+          ) : null}
+          {disabledModes.length > 0 ? (
+            <div className="code-block" style={{ marginTop: 12 }}>
+              {disabledModes
+                .map((mode) => `${mode.id}: ${modeAvailabilitySummary(mode) ?? "disabled"}`)
+                .join("\n")}
+            </div>
+          ) : null}
         </div>
 
         <div className="card">
           <h2>Audio file</h2>
           <div className="form-row">
-            <label htmlFor="audio-file">Upload .webm/.wav/.mp3</label>
+            <label htmlFor="audio-file">Upload .webm/.wav/.mp3/.ogg</label>
             <input
               id="audio-file"
               type="file"
-              accept="audio/webm,audio/wav,audio/wave,audio/mpeg,audio/mp3,.webm,.wav,.mp3"
+              accept="audio/webm,audio/wav,audio/wave,audio/mpeg,audio/mp3,audio/ogg,.webm,.wav,.mp3,.ogg"
               onChange={(event) => setSelectedAudioFile(event.target.files?.[0] ?? null)}
             />
           </div>

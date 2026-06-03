@@ -33,19 +33,54 @@ STT_SCENARIOS: dict[str, SttScenario] = {
     "kz-water-leak": SttScenario(
         id="kz-water-leak",
         label="KZ water leak",
-        expected_keywords=("су", "ағып", "жатыр", "Шымкент", "Тұран", "тезірек", "Дима"),
+        expected_keywords=("су", "ағып жатыр", "Шымкент", "Тұран", "тезірек", "Дима"),
         expected_language="kk",
         original_text="Су ағып жатыр. Шымкент, Тұран жақта. Тезірек керек. Атым Дима.",
     ),
     "mix-ru-kz-water-leak": SttScenario(
         id="mix-ru-kz-water-leak",
         label="MIX RU/KZ water leak",
-        expected_keywords=("су", "ағып", "течь", "Шымкент", "Тұран", "этаж", "тезірек", "Дима"),
+        expected_keywords=("су", "ағып жатыр", "течь", "Шымкент", "Тұран", "этаж", "тезірек", "Дима"),
         expected_language="mixed",
         original_text=(
             "Аға, су ағып жатыр, ваннаның астынан течь. Шымкент, Тұран жақта, 5 этаж. "
             "Тезірек керек. Атым Дима."
         ),
+    ),
+    "kz-fast-plumbing": SttScenario(
+        id="kz-fast-plumbing",
+        label="KZ fast plumbing",
+        expected_keywords=("су", "ағып жатыр", "кран", "тезірек", "Шымкент", "Нұрсат", "он бесінші"),
+        expected_language="kk",
+        original_text="Аға су ағып жатыр краннан тезірек келіңіз Шымкент Нұрсат он бесінші үй",
+    ),
+    "kz-slang-noisy": SttScenario(
+        id="kz-slang-noisy",
+        label="KZ slang/noisy",
+        expected_keywords=("аға", "су", "кетіп жатыр", "кран", "бала", "тез"),
+        expected_language="kk",
+        original_text="алло аға шшс су кетіп жатыр краннан бала жылап жатыр тез келіңіз",
+    ),
+    "mix-fast-plumbing": SttScenario(
+        id="mix-fast-plumbing",
+        label="MIX fast plumbing",
+        expected_keywords=("су", "ағып жатыр", "труба", "течет", "Шымкент", "Нұрсат", "тезірек"),
+        expected_language="mixed",
+        original_text="аға су ағып жатыр труба течет Шымкент Нурсат тезірек керек",
+    ),
+    "mix-spouse-background": SttScenario(
+        id="mix-spouse-background",
+        label="MIX spouse background",
+        expected_keywords=("сантехник", "муж", "кран", "течет", "тезірек", "Нұрсат", "он бес"),
+        expected_language="mixed",
+        original_text="әй алло сантехник па муж говорит кран течет тезірек келсін адрес Нурсат дом он бес",
+    ),
+    "gas-kz-ru": SttScenario(
+        id="gas-kz-ru",
+        label="GAS KZ/RU",
+        expected_keywords=("газ", "иісі", "пахнет", "Шымкент", "Нұрсат"),
+        expected_language="mixed",
+        original_text="үйде газ иісі бар пахнет газом Шымкент Нурсат не знаю что делать",
     ),
     "gas-emergency": SttScenario(
         id="gas-emergency",
@@ -75,6 +110,11 @@ STT_SCENARIO_ORDER = [
     "ru-urgent-plumbing",
     "kz-water-leak",
     "mix-ru-kz-water-leak",
+    "kz-fast-plumbing",
+    "kz-slang-noisy",
+    "mix-fast-plumbing",
+    "mix-spouse-background",
+    "gas-kz-ru",
     "gas-emergency",
     "electric-danger",
     "noisy-unclear-fallback",

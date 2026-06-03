@@ -1,4 +1,4 @@
-# Self-Host Voice Spike
+# Self-Host Voice Path
 
 ## Target Architecture
 
@@ -17,11 +17,11 @@ Browser/WebRTC or test audio
 The self-host voice service lives in `services/voice-agent`. The product/backend/admin app remains
 the Next.js app. Python handles realtime voice orchestration only and emits normalized events.
 
-## Why Vapi Remains
+## Why Legacy Vapi Code Remains
 
-Vapi stays in the repository because it is still the fastest fallback for a working hosted voice
-orchestrator and the existing webhook foundation already connects calls to Supabase, leads, and
-Telegram. The self-host spike is an evaluation path, not a production migration.
+Vapi stays in the repository only as legacy benchmark or contingency tooling. Its existing webhook
+foundation can still be useful for comparisons and emergency diagnostics. It is not the planned
+pilot path, does not drive economics, and must not block the self-host implementation.
 
 The shared contract is the provider-neutral `VoiceEvent` concept:
 
@@ -50,7 +50,7 @@ x-self-host-voice-secret: <secret>
 - Billing.
 - Marketplace, mobile app, or customer accounts.
 
-## Spike Milestones
+## Implementation Milestones
 
 1. Mock transcript to `VoiceEvent` to Telegram.
 2. Browser microphone to transcript. Done as upload-based STT spike.
@@ -60,9 +60,10 @@ x-self-host-voice-secret: <secret>
 6. Full call-end report to lead creation.
 7. Only then telephony/SIP.
 
-## Migration Gates
+## Production Gates
 
-- RU/KZ STT quality is better than Vapi.
+- Russian-first STT quality is operationally acceptable.
+- KZ and mixed RU/KZ calls have a safe callback policy until a stronger STT path is proven.
 - End-to-end latency is acceptable.
 - End-of-call lead quality is acceptable.
 - No regression in the Telegram/admin pipeline.
@@ -151,7 +152,9 @@ The page supports:
 - Local typed mock transcript scoring even when the voice-agent is offline.
 - Typed mock transcript emission through the Python service when the voice-agent is online.
 - Scenario selection for RU, KZ, mixed RU/KZ, gas, electric danger, and noisy fallback phrases.
-- STT mode selection for mock plus Deepgram baselines.
+- STT mode selection grouped by provider for mock, Deepgram baselines, optional Google/Azure
+  benchmark modes, and disabled Whisper/Azure-auto skeletons.
+- Disabled mode visibility with missing env explanations for provider credentials.
 - `/stt/experiment` scoring with keyword hits, missed keywords, language signals, and warnings.
 - Safe event/result logs.
 
@@ -175,9 +178,30 @@ detected, but remains `safety_low_confidence` until the score is at least 80. Th
 `deepgram-ru-nova3` and `deepgram-multi-nova3` modes remain experimental comparisons, not defaults.
 `deepgram-default` is not recommended because exported runs often returned empty transcripts.
 
-Important caveat: Deepgram's current model/language overview clearly lists Russian for Nova-3, but
-Kazakh is not clearly listed there. RU/KZ mixed quality must be measured with real recordings before
-any migration decision.
+Optional Kazakh rescue benchmark modes now exist without replacing Deepgram:
+
+```bash
+GOOGLE_STT_ENABLED=true
+GOOGLE_STT_API_KEY=...
+# or GOOGLE_APPLICATION_CREDENTIALS=C:\path\service-account.json
+
+AZURE_STT_ENABLED=true
+AZURE_SPEECH_KEY=...
+AZURE_SPEECH_REGION=eastus
+```
+
+Google modes are `google-kk`, `google-ru`, and `google-ru-kk-auto`. Azure modes are `azure-kk` and
+`azure-ru` for short-audio REST uploads. `azure-ru-kk-auto` and `whisper-local` are visible
+skeleton modes and remain disabled until an SDK/batch or local-model implementation is accepted.
+Azure short-audio REST uploads should use WAV PCM or OGG OPUS samples, not browser `.webm`.
+
+The Shymkent benchmark set now includes fast Kazakh plumbing, noisy/slang Kazakh, fast RU/KZ mix,
+spouse/background RU/KZ mix, and KZ/RU gas danger phrases. These are benchmark scenarios only; do
+not claim production Kazakh support until a candidate passes them.
+
+Important caveat: manual Deepgram results failed current KZ-only and mixed RU/KZ samples. RU/KZ
+mixed quality must be measured with real recordings before any migration decision, and weak KZ/MIX
+output remains callback-required.
 
 Low-confidence behavior is required before any self-host production use:
 
@@ -186,6 +210,8 @@ Low-confidence behavior is required before any self-host production use:
 - Score `< 60` is low confidence; score `< 40` is unusable.
 - Gas/electric safety scenarios below 80 add `safety_low_confidence`; gas remains low-confidence
   safety handling unless the score is at least 80.
+- KZ/MIX transcripts that are mostly non-Cyrillic are flagged and callback-required even when aliases
+  make the research transcript readable.
 - Low-confidence self-host call-end events create only `CALLBACK_PENDING` leads when there is useful
   signal or a caller phone; empty calls without useful signal become `NO_LEAD`.
 
